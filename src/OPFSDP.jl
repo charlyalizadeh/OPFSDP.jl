@@ -16,15 +16,17 @@ mutable struct Bus
 	Pmax::Float64
 	Qmin::Float64
 	Qmax::Float64
-    costs_coeff::Vector{Float64}
+    active_cost_coeff::Vector{Float64}
+    reactive_cost_coeff::Vector{Float64}
     cost_type::CostType
 	gen::Bool
 
     function Bus(id::Int=-1,
                  v::Complex=complex(0., 0.), load::Complex=complex(0., 0.), vmin::Float64=0., vmax::Float64=0.,
                  power::Complex=complex(0., 0.), Pmin::Float64=0., Pmax::Float64=0., Qmin::Float64=0., Qmax::Float64=0.,
-                 cost_coeff::Vector{Float64}=Float64[], cost_type::CostType=quadratic, gen::Bool=false)
-        new(id, v, load, vmin, vmax, power, Pmin, Pmax, Qmin, Qmax, cost_coeff, cost_type, gen)
+                 active_cost_coeff::Vector{Float64}=Float64[], reactive_cost_coeff::Vector{Float64}=Float64[], cost_type::CostType=quadratic,
+                 gen::Bool=false)
+        new(id, v, load, vmin, vmax, power, Pmin, Pmax, Qmin, Qmax, active_cost_coeff, reactive_cost_coeff, cost_type, gen)
     end
 end
 
