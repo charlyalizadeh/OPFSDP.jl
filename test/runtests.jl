@@ -1,11 +1,12 @@
 using OPFSDP
 using Test
 
-function check_bus(
-		bus::OPFSDP.Bus,
-		v::Complex, load::Complex, vmin::Float64, vmax::Float64,
-		power::Complex, Pmin::Float64, Pmax::Float64, Qmin::Float64, Qmax::Float64,
-		gen::Bool)
+function check_bus(bus::OPFSDP.Bus,
+                   v::Complex, load::Complex, vmin::Float64, vmax::Float64,
+                   power::Complex, Pmin::Float64, Pmax::Float64, Qmin::Float64, Qmax::Float64,
+                   active_cost_coeff::Vector{Float64}, reactive_cost_coeff::Vector{Float64},
+                   active_cost_type::OPFSDP.CostType, reactive_cost_type::OPFSDP.CostType,
+                   gen::Bool)
 	@test bus.v == v
 	@test bus.load == load
 	@test bus.vmin == vmin
@@ -15,27 +16,31 @@ function check_bus(
 	@test bus.Pmax == Pmax
 	@test bus.Qmin == Qmin
 	@test bus.Qmax == Qmax
+    @test bus.active_cost_coeff == active_cost_coeff
+    @test bus.reactive_cost_coeff == reactive_cost_coeff
+    @test bus.active_cost_type == active_cost_type
+    @test bus.reactive_cost_type == reactive_cost_type
 	@test bus.gen == gen
 end
 
 function check_bus(bus::OPFSDP.Bus, v::Complex, load::Complex, vmin::Float64, vmax::Float64)
 	check_bus(bus,
 			  v, load, vmin, vmax,
-			  complex(0, 0), 0., 0., 0., 0., false)
+              complex(0, 0), 0., 0., 0., 0., Float64[], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, false)
 end
 
 @testset "OPFSDP.jl" begin
 	network = read_matpower("data/case14.m")
     # Formated for easy maintenance
     #         BUS_ID             VOLTAGE                         DEMAND                             VMIN  VMAX  POWER GENERATION                      PMIN         PMAX         QMIN          QMAX GEN
-	check_bus(network.buses[1],  complex(1.06, 0. / 100.),       complex(0. / 100., 0. / 100.),     0.94, 1.06, complex(232.4 / 100., -16.9 / 100.),  0. / 100.,   332.4 / 100., 0. / 100.,   10. / 100., true)
-	check_bus(network.buses[2],  complex(1.045, -4.98 / 100.),   complex(21.7 / 100., 12.7 / 100.), 0.94, 1.06, complex(40. / 100., 42.4 / 100.),     0. / 100.,   140. / 100.,  -40. / 100., 50. / 100., true)
-	check_bus(network.buses[3],  complex(1.01, -12.72 / 100.),   complex(94.2 / 100., 19 / 100.),   0.94, 1.06, complex(0. / 100., 23.4 / 100.),      0. / 100.,   100. / 100.,  0. / 100.,   40. / 100., true)
+    check_bus(network.buses[1],  complex(1.06, 0. / 100.),       complex(0. / 100., 0. / 100.),     0.94, 1.06, complex(232.4 / 100., -16.9 / 100.),  0. / 100.,   332.4 / 100., 0. / 100.,   10. / 100., [0.0430292599, 20, 0], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, true)
+	check_bus(network.buses[2],  complex(1.045, -4.98 / 100.),   complex(21.7 / 100., 12.7 / 100.), 0.94, 1.06, complex(40. / 100., 42.4 / 100.),     0. / 100.,   140. / 100.,  -40. / 100., 50. / 100., [0.25, 20, 0], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, true)
+	check_bus(network.buses[3],  complex(1.01, -12.72 / 100.),   complex(94.2 / 100., 19 / 100.),   0.94, 1.06, complex(0. / 100., 23.4 / 100.),      0. / 100.,   100. / 100.,  0. / 100.,   40. / 100., [0.01, 40, 0], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, true)
 	check_bus(network.buses[4],  complex(1.019, -10.33 / 100.),  complex(47.8 / 100., -3.9 / 100.), 0.94, 1.06)
 	check_bus(network.buses[5],  complex(1.02, -8.78 / 100.),    complex(7.6 / 100., 1.6 / 100.),   0.94, 1.06)
-	check_bus(network.buses[6],  complex(1.07, -14.22 / 100.),   complex(11.2 / 100., 7.5 / 100.),  0.94, 1.06, complex(0. / 100., 12.2 / 100.),      0. / 100.,   100. / 100.,  -6. / 100.,  24. / 100., true)
+	check_bus(network.buses[6],  complex(1.07, -14.22 / 100.),   complex(11.2 / 100., 7.5 / 100.),  0.94, 1.06, complex(0. / 100., 12.2 / 100.),      0. / 100.,   100. / 100.,  -6. / 100.,  24. / 100., [0.01, 40, 0], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, true)
 	check_bus(network.buses[7],  complex(1.062, -13.37 / 100.),  complex(0 / 100., 0 / 100.),       0.94, 1.06)
-	check_bus(network.buses[8],  complex(1.09, -13.36 / 100.),   complex(0 / 100., 0 / 100.),       0.94, 1.06, complex(0. / 100., 17.4 / 100.),      0. / 100.,   100. / 100.,  -6. / 100.,  24. / 100., true)
+	check_bus(network.buses[8],  complex(1.09, -13.36 / 100.),   complex(0 / 100., 0 / 100.),       0.94, 1.06, complex(0. / 100., 17.4 / 100.),      0. / 100.,   100. / 100.,  -6. / 100.,  24. / 100., [0.01, 40, 0], Float64[], OPFSDP.quadratic, OPFSDP.quadratic, true)
 	check_bus(network.buses[9],  complex(1.056, -14.94 / 100.),  complex(29.5 / 100., 16.6 / 100.), 0.94, 1.06)
 	check_bus(network.buses[10], complex(1.051, -15.1 / 100.),   complex(9 / 100., 5.8 / 100.),     0.94, 1.06)
 	check_bus(network.buses[11], complex(1.057, -14.79 / 100.),  complex(3.5 / 100., 1.8 / 100.),   0.94, 1.06)

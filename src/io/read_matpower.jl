@@ -1,6 +1,5 @@
 include("compute_current.jl")
 include("compute_power.jl")
-include("read_utils.jl")
 
 function arg_to(lines, pattern)
     i = 1
@@ -20,6 +19,7 @@ arg_baseMVA(lines) = arg_to(lines, "mpc.baseMVA")
 arg_bus(lines) = arg_to(lines, "mpc.bus")
 arg_genbus(lines) = arg_to(lines, "mpc.gen")
 arg_branch(lines) = arg_to(lines, "mpc.branch")
+arg_gencost(lines) = arg_to(lines, "mpc.gencost")
 
 function extract_baseMVA(lines)
     i = arg_baseMVA(lines)
@@ -57,6 +57,26 @@ function add_gen_data(bus_dict::Dict{Int, Bus}, lines, baseMVA)
     end
 end
 
+function add_gencost_data(network, lines)
+    line_nb = arg_gencost(lines) + 1
+
+    for bus_id in network.gen_buses_id
+        values = get_line_values(lines[line_nb])
+        network.buses[bus_id].active_cost_type = CostType(trunc(Int, values[1]))
+        network.buses[bus_id].active_cost_coeff = values[5:end]
+        line_nb += 1
+    end
+    if occursin("];", lines[line_nb])
+        return
+    end
+    for bus_id in network.gen_buses_id
+        values = get_line_values(lines[line_nb])
+        network.buses[bus_id].reactive_cost_type = CostType(trunc(Int, values[1]))
+        network.buses[bus_id].reactive_cost_coeff = values[5:end]
+        line_nb += 1
+    end
+end
+
 function extract_branches(bus_dict, lines, baseMVA)
     i = arg_branch(lines) + 1
 
@@ -82,8 +102,14 @@ function read_matpower(path::AbstractString)
     bus_dict = extract_bus_dict(lines, baseMVA)
     add_gen_data(bus_dict, lines, baseMVA)
     branches = extract_branches(bus_dict, lines, baseMVA)
-
     network.buses = [bus_dict[k] for k in sort(collect(keys(bus_dict)))]
     network.branches = branches
+    for (i, bus) in enumerate(network.buses)
+        if bus.gen
+            push!(network.gen_buses_id, i)
+        end
+    end
+    add_gencost_data(network, lines)
+
     return network
 end
