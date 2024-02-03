@@ -1,19 +1,31 @@
 module OPFSDP
 
+@enum CostType begin
+    quadratic = 1
+    piecewise_linear = 2
+end
+
 mutable struct Bus
 	id::Int
 	v::Complex
-	Sl::Complex
+	load::Complex
 	vmin::Float64
 	vmax::Float64
-	S::Complex
-	cost_linear::Float64
-	cost_constant::Float64
+	power::Complex
 	Pmin::Float64
 	Pmax::Float64
 	Qmin::Float64
 	Qmax::Float64
+    costs_coeff::Vector{Float64}
+    cost_type::CostType
 	gen::Bool
+
+    function Bus(id::Int=-1,
+                 v::Complex=complex(0., 0.), load::Complex=complex(0., 0.), vmin::Float64=0., vmax::Float64=0.,
+                 power::Complex=complex(0., 0.), Pmin::Float64=0., Pmax::Float64=0., Qmin::Float64=0., Qmax::Float64=0.,
+                 cost_coeff::Vector{Float64}=Float64[], cost_type::CostType=quadratic, gen::Bool=false)
+        new(id, v, load, vmin, vmax, power, Pmin, Pmax, Qmin, Qmax, cost_coeff, cost_type, gen)
+    end
 end
 
 mutable struct Branch
@@ -21,22 +33,18 @@ mutable struct Branch
 	bus_dst::Int
 	isrc::Complex
 	idst::Complex
-	Ssrc::Complex
-	Sdst::Complex
+	power_src::Complex
+	power_dst::Complex
 end
 
 mutable struct PowerFlowNetwork
 	name::String
 	buses::Vector{Bus}
 	branches::Vector{Branch}
+
+    PowerFlowNetwork(name::String="", buses::Vector{Bus}=Bus[], branches::Vector{Branch}=Branch[]) = new(name, buses, branches)
 end
 
-Bus() = Bus(-1, complex(0., 0.), complex(0., 0.), 0., 0., complex(0., 0.), 0., 0., 0., 0., 0., 0., false)
-function Bus(id::Int, v::Complex, Sl::Complex, vmin::Float64, vmax::Float64)
-	Bus(id, v, Sl, vmin, vmax, complex(0., 0.), 0., 0., 0., 0., 0., 0., false)
-end
-
-PowerFlowNetwork() = PowerFlowNetwork("", [], [])
 
 
 include("io/read_matpower.jl")

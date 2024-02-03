@@ -1,5 +1,6 @@
 include("compute_current.jl")
 include("compute_power.jl")
+include("read_utils.jl")
 
 function arg_to(lines, pattern)
     i = 1
@@ -9,16 +10,16 @@ function arg_to(lines, pattern)
     return i
 end
 
-arg_baseMVA(lines) = arg_to(lines, "mpc.baseMVA")
-arg_bus(lines) = arg_to(lines, "mpc.bus")
-arg_genbus(lines) = arg_to(lines, "mpc.gen")
-arg_branch(lines) = arg_to(lines, "mpc.branch")
-
 function get_line_values(line)
     line = split(line, ';')[1]
     values = split(line, '\t')[2:end]
     return map(x -> parse(Float64, x), values)
 end
+
+arg_baseMVA(lines) = arg_to(lines, "mpc.baseMVA")
+arg_bus(lines) = arg_to(lines, "mpc.bus")
+arg_genbus(lines) = arg_to(lines, "mpc.gen")
+arg_branch(lines) = arg_to(lines, "mpc.branch")
 
 function extract_baseMVA(lines)
     i = arg_baseMVA(lines)
@@ -46,7 +47,7 @@ function add_gen_data(bus_dict::Dict{Int, Bus}, lines, baseMVA)
 
     while !occursin("];", lines[i])
         values = get_line_values(lines[i])
-        bus_dict[values[1]].S = complex(values[2] / baseMVA, values[3] / baseMVA)
+        bus_dict[values[1]].power = complex(values[2] / baseMVA, values[3] / baseMVA)
         bus_dict[values[1]].Pmin = values[10] / baseMVA
         bus_dict[values[1]].Pmax = values[9] / baseMVA
         bus_dict[values[1]].Qmin = values[5] / baseMVA
