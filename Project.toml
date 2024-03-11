@@ -3,6 +3,13 @@ uuid = "0a065e61-8269-40e6-a06e-aaa0c113a9d1"
 authors = ["Charly Alizadeh"]
 version = "1.0.0-DEV"
 
+[deps]
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Mosek = "6405355b-0ac2-5fba-af84-adbd65488c0e"
+MosekTools = "1ec41992-ff65-5c91-ac43-2df89e9693a4"
+
 [compat]
 julia = "1"
 
