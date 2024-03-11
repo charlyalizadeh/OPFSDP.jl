@@ -1,6 +1,3 @@
-include("read_utils.jl")
-
-
 function extract_baseMVA(lines)
     values = map(x -> parse(Float64, x), split(lines[1], ','))
     return values[1]
