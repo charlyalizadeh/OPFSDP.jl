@@ -35,7 +35,7 @@ function _extract_bus_dict(lines, baseMVA)
     while !occursin("];", lines[i])
         values = _get_line_values(lines[i])
         bus_dict[values[1]] = Bus(trunc(Int, values[1]),                                # id
-                                  complex(values[8], values[9] / baseMVA),              # voltage
+                                  values[8] * exp(im * values[9]),                      # voltage
                                   complex(values[3] / baseMVA, values[4] / baseMVA),    # load
                                   values[13],                                           # vmin
                                   values[12])                                           # vmax
@@ -79,7 +79,7 @@ function _add_gencost_data!(network, lines)
 
         ncost = values[4]
         network.generators[order[i]][index_dict[order[i]]].active_cost_type = CostType(trunc(Int, values[1]))
-        network.generators[order[i]][index_dict[order[i]]].active_cost_coeff = [v #==* 10^(2 * (ncost - i))==# for (i, v) in enumerate(values[5:end])]
+        network.generators[order[i]][index_dict[order[i]]].active_cost_coeff = [v * 10^(2 * (ncost - i)) for (i, v) in enumerate(values[5:end])]
 
         line_nb += 1
         index_dict[order[i]] += 1
@@ -101,13 +101,13 @@ function _add_gencost_data!(network, lines)
 end
 
 function _extract_branches_values(bus_dict, values, baseMVA)
-    v_src = bus_dict[values[1]].v
-    v_dst = bus_dict[values[2]].v
+    v_from = bus_dict[values[1]].v
+    v_to = bus_dict[values[2]].v
     admittance = inv(complex(values[3], values[4]))
     susceptance = values[5]
     tf_ratio = values[9] == 0 ? 1.0 : values[9]
-    tf_ps_angle = values[10]#/ baseMVA
-    return v_src, v_dst, admittance, susceptance, tf_ratio, tf_ps_angle
+    tf_ps_angle = values[10]
+    return v_from, v_to, admittance, susceptance, tf_ratio, tf_ps_angle
 end
 
 function _extract_branches(network, lines, baseMVA)
@@ -116,20 +116,19 @@ function _extract_branches(network, lines, baseMVA)
     branches::Vector{Branch} = []
     while !occursin("];", lines[i])
         values = _get_line_values(lines[i])
-        v_src, v_dst, admittance, susceptance, tf_ratio, tf_ps_angle = _extract_branches_values(network.buses, values, baseMVA)
+        v_from, v_to, admittance, susceptance, tf_ratio, tf_ps_angle = _extract_branches_values(network.buses, values, baseMVA)
        rateA = values[6] == 0 ? Inf : values[6] / baseMVA
        rateB = values[7] == 0 ? Inf : values[7] / baseMVA
        rateC = values[8] == 0 ? Inf : values[8] / baseMVA
-        branch = Branch(values[1], # source bus id
-                        values[2], # destination bus id
-                        admittance,
-                        susceptance,
-                        tf_ratio,
-                        tf_ps_angle,
-                        rateA,
-                        rateB,
-                        rateC
-                        )
+       branch = Branch(values[1], # source bus id
+                       values[2], # destination bus id
+                       admittance,
+                       susceptance,
+                       tf_ratio,
+                       tf_ps_angle,
+                       rateA,
+                       rateB,
+                       rateC)
         push!(branches, branch)
         i += 1
     end

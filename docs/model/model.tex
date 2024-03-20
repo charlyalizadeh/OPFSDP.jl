@@ -1,0 +1,186 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+
+\title{SDP relaxation formulation of the OPF}
+\author{Charly Alizadeh}
+\date{February 2024}
+
+\def \powerfromfirst {+\frac{\overline{y_l} - \mathbf{j}b_l}{\tau_l^2}}
+\def \powerfromsecond {-\overline{y_l} \frac{e^{\mathbf{j}\theta_l}}{\tau_l}}
+\def \powertofirst {+(\overline{y_l} - \mathbf{j}b_l)}
+\def \powertosecond {-\overline{y_l} \frac{e^{-\mathbf{j}\theta_l}}{\tau_l }}
+
+\def \currentfromfirst {+((y_l + j\frac{b_l}{2})\frac{1}{\tau_l^2})}
+\def \currentfromsecond {-(y_l\frac{1}{\tau_l e^{-j\theta_l}})}
+\def \currenttofirst {-(y_l\frac{1}{\tau_l e^{j\theta_l}})}
+\def \currenttosecond {+(y_l + j\frac{b_l}{2})}
+
+\begin{document}
+
+
+\maketitle
+
+\begin{equation}
+\begin{small}
+\begin{array}{lll}
+\min\limits_{v, S} & \sum\limits_{g\in G}c_gRe(S_g)+k_g& \\[4mm]
+s.c. & S_n = S_n^{d}%+(g_n-\mathbf{j}b_n)|v_n|^2
++\sum\limits_{l=(n,d)}(\powerfromfirst{}{|v_n|^2} \powerfromsecond{}v_n\overline{v_d}) \\
+& -\sum\limits_{l=(o,n)}(\powertofirst{}{|v_n|^2} \powertosecond{}v_n\overline{v_o}) ~~~~~~~~~~~~~~~~~ \forall n \in N\\[4mm]
+& P_n^{min} \leq Re(S_n)\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
+& Q_n^{min} \leq Im(S_n)\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
+& S_n=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
+& (v_n^{min})^2 \leq |v_n|^2 \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
+& |\currentfromfirst{}{v_{o_l}} \currentfromsecond{}v_{d_l}|^2 \leq (i_l^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+& |\currenttofirst{}{v_{o_l}} \currenttosecond{}v_{d_l}|^2 \leq (i_l^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+& v_n \in \mathbb{C}, S_n \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
+\end{array}
+\end{small}
+\label{OPF}
+\end{equation}
+
+The variables of this problem are:
+\begin{itemize}
+    \item the complexe power generated at all the buses\\\(S_n, \forall n \in N\) (\(S_n = Re(S_n) + \mathbf{j}Im(S_n)\))
+    \item the complexe voltage at all the buses\\\(v_n, \forall n \in N\) (\(v_n = Re(v_n) + \mathbf{j}Im(v_n)\))
+\end{itemize}
+
+First let's define some reformulate this problem using constant
+
+
+\begin{equation}
+\begin{small}
+\begin{array}{lll}
+    \min\limits_{v, S} & \sum\limits_{g\in G}c_g\mathbf{Re(S_g)}+k_g& \\[4mm]
+    s.c. & \mathbf{S_n} = S_n^{d} + \sum\limits_{l=(n,d)}(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+         & - \sum\limits_{l=(o,n)}(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+         & P_n^{min} \leq \mathbf{Re(S_n)}\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
+         & Q_n^{min} \leq \mathbf{Im(S_n)}\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
+         & \mathbf{S_n}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
+         & (v_n^{min})^2 \leq \mathbf{|v_n|^2} \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
+         & |i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+         & |i^{dest(1)}\mathbf{v_{ol}} + i^{dest{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+         & \mathbf{v_n} \in \mathbb{C}, \mathbf{S_n} \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
+\end{array}
+\end{small}
+\label{OPF2}
+\end{equation}
+
+with
+\[
+    \begin{array}{ll}
+        S^{orig(1)}_l =& \frac{\overline{y_l} - \mathbf{j}b_l}{\tau^2_l} \\
+        S^{orig(2)}_l =& -\overline{y_l}\frac{e^{\mathbf{j}\theta_l}}{\tau_l} \\
+        S^{dest(1)}_l =& \overline{y_l} - \mathbf{j}b_l \\
+        S^{dest(2)}_l =& -\overline{y_l}\frac{e^{-\mathbf{j}\theta_l}}{\tau_l} \\
+        i^{orig(1)} =& \frac{\overline{y_l} + \mathbf{j}b_l}{\tau_l^2}\\
+        i^{orig(2)} =& -\overline{y_l}\frac{e^{-\mathbf{j}\theta_l}}{\tau_l}\\
+        i^{dest(1)} =& -\overline{y_l}\frac{e^{\mathbf{j}\theta_l}}{\tau_l}\\
+        i^{dest(2)} =& \overline{y_l} + \mathbf{j}b_l\\\
+    \end{array}
+\]
+
+
+\begin{equation}
+\begin{small}
+\begin{array}{lll}
+    \min\limits_{v, S} & \sum\limits_{g\in G}c_g\mathbf{Re(S_g)}+k_g& \\[4mm]
+    s.c. & \mathbf{Re(S_n)} = Re(S_n^{d}) + \sum\limits_{l=(n,d)}Re(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+         & - \sum\limits_{l=(o,n)}Re(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+         \\
+         & \mathbf{Im(S_n)} = Im(S_n^{d}) + \sum\limits_{l=(n,d)}Im(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+         & - \sum\limits_{l=(o,n)}Im(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+         \\
+         & P_n^{min} \leq \mathbf{Re(S_n)}\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
+         & Q_n^{min} \leq \mathbf{Im(S_n)}\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
+         & \mathbf{Re(S_n)}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
+         & \mathbf{Im(S_n)}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
+         & (v_n^{min})^2 \leq \mathbf{|v_n|^2} \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
+         & |i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+         & |i^{dest(1)}\mathbf{v_{ol}} + i^{dest{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
+         & \mathbf{v_n} \in \mathbb{C}, \mathbf{S_n} \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
+\end{array}
+\end{small}
+\label{OPF real}
+\end{equation}
+\newpage
+Using the matrix:
+
+\[
+    V = \begin{pmatrix}
+        Re(v_1)^2       & Re(v_1)Im(v_1) & Re(v_1)Re(v_2) & Re(v_1)Im(v_2) & \ldots\\
+        Re(v_1)Im(v_1)  & Im(v_1)^2      & Im(v_1)Re(v_2) & Im(v_1)Im(v_2) & \ldots\\
+        Re(v_1)Re(v_2)  & Im(v_1)Re(v_2) & Re(v_2)^2      & Re(v_2)Im(v_2) & \ldots\\
+        Re(v_1)Im(v_2)  & Im(v_1)Im(v_2) & Re(v_2)Im(v_2) & Im(v_2)^2      & \ldots\\
+        \vdots          & \vdots         & \vdots         & \vdots         & \ddots\\
+    \end{pmatrix}
+\]
+
+and the equalities:
+
+\[
+    \begin{array}{lll}
+        |v_n|^2 &= Re(v_n)^2 + Im(v_n)^2 \\
+        v_n\overline{v_d} &= Im(v_n)Im(v_d) + Re(v_n)Re(v_d) + \mathbf{j}(Im(v_n)Re(v_d) - Re(v_n)Im(v_d)) \\
+        v_n\overline{v_o} &= Im(v_n)Im(v_o) + Re(v_n)Re(v_o) + \mathbf{j}(Im(v_n)Re(v_o) - Re(v_n)Im(v_o))
+    \end{array}
+\]
+
+We can then express the model using the power variables \(S_n\) and the coefficient in the matrix \(V\).
+
+\[
+    \begin{array}{c}
+        Re(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+        =\\
+        Re(S^{orig(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Re(S^{orig(2)}_l)(\mathbf{Im(v_n)Im(v_d)} + \mathbf{Re(v_n)Re(v_d)})
+    \end{array}
+\]
+
+\[
+    \begin{array}{c}
+        Im(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+        =\\
+        Im(S^{orig(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Im(S^{orig(2)}_l)(\mathbf{Im(v_n)Re(v_d)} + \mathbf{Re(v_n)Im(v_d)})
+    \end{array}
+\]
+
+\[
+    \begin{array}{c}
+        Re(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+        =\\
+        Re(S^{dest(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Re(S^{dest(2)}_l)(\mathbf{Im(v_n)Im(v_o)} + \mathbf{Re(v_n)Re(v_o)})
+    \end{array}
+\]
+
+\[
+    \begin{array}{c}
+        Im(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+        =\\
+        Im(S^{dest(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Im(S^{dest(2)}_l)(\mathbf{Im(v_n)Re(v_o)} - \mathbf{Re(v_n)Im(v_o)})
+    \end{array}
+\]
+
+\[
+    \begin{array}{c}
+        Re(i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}})\\
+        =\\
+        Re(i^{orig(1)})\mathbf{Re(v_{ol})} + Im(i^{orig(1)})\mathbf{Im(v_{ol})}
+        +
+        Re(i^{orig(2)})\mathbf{Re(v_{dl})} + Im(i^{orig(2)})\mathbf{Im(v_{dl})}
+    \end{array}
+\]
+
+\[
+    \begin{array}{c}
+        Im(i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}})\\
+        =\\
+        Re(i^{orig(1)})\mathbf{Im(v_{ol})} + Im(i^{orig(1)})\mathbf{Re(v_{ol})} + Re(i^{orig(2)})\mathbf{Im(v_{dl})} + Im(i^{orig(2)})\mathbf{Re(v_{dl})}
+
+    \end{array}
+\]
+
+
+\end{document}

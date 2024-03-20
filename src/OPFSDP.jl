@@ -6,6 +6,7 @@ using MosekTools
 using SparseArrays
 using LinearAlgebra
 using Logging
+using Printf
 
 
 
@@ -50,8 +51,8 @@ mutable struct Generator
 end
 
 mutable struct Branch
-	src::Int
-	dst::Int
+	from::Int
+	to::Int
 	admittance::Complex
 	susceptance::Float64
 	tf_ratio::Float64
@@ -60,6 +61,7 @@ mutable struct Branch
 	rateB::Float64
 	rateC::Float64
 end
+Base.copy(b::Branch) = Branch(b.from, b.to, b.admittance, b.susceptance, b.tf_ratio, b.tf_ps_angle, b.rateA, b.rateB, b.rateC)
 
 mutable struct PowerFlowNetwork
 	name::String
@@ -81,18 +83,8 @@ mutable struct PowerFlowNetwork
     end
 end
 
-function get_branches_in(network, bus_id)
-	return [b for b in network.branches if b.dst == bus_id]
-end
 
-function get_branches_out(network, bus_id)
-	return [b for b in network.branches if b.src == bus_id]
-end
-
-function generators(network::PowerFlowNetwork)
-    return vcat([gen for gen in values(network.generators)]...)
-end
-
+include("core.jl")
 include("io/read_matpower.jl")
 include("utils/compute_current.jl")
 include("utils/compute_power.jl")
@@ -113,11 +105,12 @@ include("solve/solve.jl")
 include("solve/utils.jl")
 include("solve/variables.jl")
 include("solve/voltage_limit.jl")
+include("solve/check.jl")
 include("solve/solve.jl")
 
 export read_matpower
 export compute_current_origin, compute_current_destination
-export compute_powers, compute_power_src, compute_power_dst, str_power_src, str_power_dst
+export compute_powers, compute_power_from, compute_power_to, str_power_from, str_power_to
 export get_branches_in, get_branches_out
 export display_opf
 export solve!

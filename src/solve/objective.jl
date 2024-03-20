@@ -3,7 +3,7 @@ function _define_objective_bus_quadratic!(model, network, variables, gen)
 end
 
 function _define_objective_bus_linear!(model, network, variables, gen)
-	return @expression(model, gen.active_cost_coeff[end - 1] * variables["real(S_$(bus.id))"] + gen.active_cost_coeff[end])
+	return @expression(model, gen.active_cost_coeff[end - 1] * variables["real(S_$(gen.id))"] + gen.active_cost_coeff[end])
 end
 
 function _define_objective!(model, network, variables)

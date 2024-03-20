@@ -2,8 +2,8 @@ function adjacency_matrix(network::PowerFlowNetwork)
 	adj = zeros(length(network.buses_order), length(network.buses_order))
     order_map = Dict(v => i for (i, v) in enumerate(network.buses_order))
 	for branch in network.branches
-        bus_index1 = order_map[branch.src]
-        bus_index2 = order_map[branch.dst]
+        bus_index1 = order_map[branch.from]
+        bus_index2 = order_map[branch.to]
 		adj[bus_index1, bus_index2] = 1.0
 		adj[bus_index2, bus_index1] = 1.0
 	end

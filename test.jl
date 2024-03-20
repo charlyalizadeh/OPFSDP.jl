@@ -26,7 +26,7 @@ function display_network_cholesky_latex(name)
     println(JuMP.latex_formulation(model))
 end
 
-function display_power_value(network, model)
+function display_value_power(network, model)
     for (id, bus) in network.buses
         val = JuMP.value(JuMP.variable_by_name(model, "real(S_$(bus.id))")) + im * JuMP.value(JuMP.variable_by_name(model, "imag(S_$(bus.id))"))
         println("(model) S_$(bus.id) = $(val)")
@@ -40,7 +40,7 @@ function display_power_value(network, model)
     end
 end
 
-function display_voltage_value(network, model, cliques)
+function display_value_voltage(network, model, cliques)
     for (clique_id, clique) in enumerate(cliques)
         for i in 1:length(clique)*2
             for j in 1:length(clique)*2
@@ -65,20 +65,71 @@ function display_voltage_value(network, model, cliques)
     println("-------------------------------")
 end
 
+function display_value_voltage(network, model)
+    for i in 1:2*length(network.buses)
+        for j in 1:2*length(network.buses)
+            x = min(i, j)
+            y = max(i, j)
+            value = JuMP.value(JuMP.variable_by_name(model, "voltages[$x,$y]"))
+            @printf "%+.2f " value
+        end
+        println()
+    end
+    println()
+end
+
 function solve_network(name)
+    network = OPFSDP.read_matpower("data/MATPOWER/$name.m")
+    model = OPFSDP.solve!(network)
+    if length(network.buses) < 100
+        println(model)
+        display_value_power(network, model)
+        display_value_voltage(network, model)
+        rates = [b.rateA for b in network.branches]
+        println("RATE: $(rates)")
+    end
+
+    println("IS SOLVED AND FEASIBLE: $(JuMP.is_solved_and_feasible(model))")
+    println("STATUS: $(JuMP.termination_status(model))")
+    println("OBJECTIVE: $(JuMP.objective_value(model))")
+end
+
+function solve_network_cholesky(name)
     network = OPFSDP.read_matpower("data/MATPOWER/$name.m")
     cadj = OPFSDP.cholesky_extension(network)
     cliques = OPFSDP.maximal_cliques(cadj)
     cliquetree = OPFSDP.maximal_cliquetree(cliques)
 
     model = OPFSDP.solve!(network, cliques, cliquetree)
-    println("CLIQUES: $(cliques)")
-    println(model)
-    display_power_value(network, model)
-    display_voltage_value(network, model, cliques)
+    if length(network.buses) < 100
+        println("CLIQUES: $(cliques)")
+        println(model)
+        display_value_power(network, model)
+        display_value_voltage(network, model, cliques)
+        rates = [b.rateA for b in network.branches]
+        println("RATE: $(rates)")
+    end
+    println("IS SOLVED AND FEASIBLE: $(JuMP.is_solved_and_feasible(model))")
+    println("STATUS: $(JuMP.termination_status(model))")
+    println("OBJECTIVE: $(JuMP.objective_value(model))")
+end
 
-    rates = [b.rateA for b in network.branches]
-    println("RATE: $(rates)")
+function solve_network_one_clique(name)
+    network = OPFSDP.read_matpower("data/MATPOWER/$name.m")
+    cliques = [collect(1:length(network.buses))]
+    cliquetree = sparse(zeros(0, 0))
+
+    model = OPFSDP.solve!(network, cliques, cliquetree)
+
+    if length(network.buses) < 100
+        println("CLIQUES: $(cliques)")
+        println(model)
+        display_value_power(network, model)
+        display_value_voltage(network, model, cliques)
+        rates = [b.rateA for b in network.branches]
+        println("RATE: $(rates)")
+    end
+
     println("IS SOLVED AND FEASIBLE: $(JuMP.is_solved_and_feasible(model))")
     println("STATUS: $(JuMP.termination_status(model))")
     println("OBJECTIVE: $(JuMP.objective_value(model))")
@@ -96,4 +147,12 @@ function display_network_rate()
     end
 end
 
-solve_network("case14")
+function check_model_power(name)
+    network = OPFSDP.read_matpower("data/MATPOWER/$name.m")
+    OPFSDP.check_power_balance_equation(network)
+end
+
+#check_model_power("case14")
+solve_network("case9")
+#solve_network_cholesky("case118")
+#solve_network_one_clique("case118")
