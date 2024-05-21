@@ -2,21 +2,13 @@
 \usepackage{graphicx} % Required for inserting images
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{kbordermatrix}
 
 
 \title{SDP relaxation formulation of the OPF}
 \author{Charly Alizadeh}
 \date{February 2024}
 
-\def \powerfromfirst {+\frac{\overline{y_l} - \mathbf{j}b_l}{\tau_l^2}}
-\def \powerfromsecond {-\overline{y_l} \frac{e^{\mathbf{j}\theta_l}}{\tau_l}}
-\def \powertofirst {+(\overline{y_l} - \mathbf{j}b_l)}
-\def \powertosecond {-\overline{y_l} \frac{e^{-\mathbf{j}\theta_l}}{\tau_l }}
-
-\def \currentfromfirst {+((y_l + j\frac{b_l}{2})\frac{1}{\tau_l^2})}
-\def \currentfromsecond {-(y_l\frac{1}{\tau_l e^{-j\theta_l}})}
-\def \currenttofirst {-(y_l\frac{1}{\tau_l e^{j\theta_l}})}
-\def \currenttosecond {+(y_l + j\frac{b_l}{2})}
 
 \begin{document}
 
@@ -25,161 +17,463 @@
 
 \begin{equation}
 \begin{small}
-\begin{array}{lll}
-\min\limits_{v, S} & \sum\limits_{g\in G}c_gRe(S_g)+k_g& \\[4mm]
-s.c. & S_n = S_n^{d}%+(g_n-\mathbf{j}b_n)|v_n|^2
-+\sum\limits_{l=(n,d)}(\powerfromfirst{}{|v_n|^2} \powerfromsecond{}v_n\overline{v_d}) \\
-& -\sum\limits_{l=(o,n)}(\powertofirst{}{|v_n|^2} \powertosecond{}v_n\overline{v_o}) ~~~~~~~~~~~~~~~~~ \forall n \in N\\[4mm]
-& P_n^{min} \leq Re(S_n)\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
-& Q_n^{min} \leq Im(S_n)\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
-& S_n=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
-& (v_n^{min})^2 \leq |v_n|^2 \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
-& |\currentfromfirst{}{v_{o_l}} \currentfromsecond{}v_{d_l}|^2 \leq (i_l^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-& |\currenttofirst{}{v_{o_l}} \currenttosecond{}v_{d_l}|^2 \leq (i_l^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-& v_n \in \mathbb{C}, S_n \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
+\begin{array}{rrl}
+    \min & \sum\limits_{g\in \mathcal{G}}c_{g1}*\mathcal{S}^r_g + c_{g0} &\\
+    \forall g \in \mathcal{G} & \underline{\mathcal{S}_g} \leq \mathcal{S}_g  &\leq \overline{\mathcal{S}_g} \\
+    \forall b \in \mathcal{B} & \tilde{S}_b + Tr(\mathbf{\Psi}_b W) + iTr(\mathbf{\hat{\Psi}}_b) &= \sum\limits_{g \in \mathcal{G}_b} \mathcal{S}_g\\
+    \forall (b, a, h) \in \mathcal{L} & Tr(\mathbf{\Phi}_{bah}W)^2 + Tr(\mathbf{\hat{\Phi}}_{bah}W)^2 & \leq \overline{S}_{bah}^2 \\
+    \forall (b, a, h) \in \mathcal{L}_0 & [\tan(\underline{\mathbf{\eta}}_{bah}), \tan({\overline{\mathbf{\eta}}_{bah}})]Tr(\mathbf{\Theta}_{ba}W) & \ni Tr(\hat{\mathbf{\Theta}}_{ba}W) \\
+    \forall (b, a, h) \in \mathcal{L}_0 & Tr(\mathbf{\Theta}_{ba}W) &\geq 0 \\
+                                    & e_r^TV^c= 0 \wedge e_r^TV^r &\geq 0 \\
+    \forall b \in \mathcal{B} & \underline{V}_b^2 \leq Tr(\mathbf{\Theta}_{bb}W) &\leq \overline{V}_b^2 \\
+                          & W &\succeq 0
 \end{array}
 \end{small}
 \label{OPF}
 \end{equation}
 
-The variables of this problem are:
-\begin{itemize}
-    \item the complexe power generated at all the buses\\\(S_n, \forall n \in N\) (\(S_n = Re(S_n) + \mathbf{j}Im(S_n)\))
-    \item the complexe voltage at all the buses\\\(v_n, \forall n \in N\) (\(v_n = Re(v_n) + \mathbf{j}Im(v_n)\))
-\end{itemize}
+Let's reformulate this model using matrix indexes.\\
 
-First let's define some reformulate this problem using constant
+%For easy translation in code we are gona use the following notation:
+%\begin{itemize}
+%    \item \(M[i, j]\): the value at row \(i\) and col \(j\) in the matrix \(M\) \\
+%    \item \(M[i, :]\): the vector corresponding of the row \(i\) in the matrix \(M\) \\
+%    \item \(M[:, j]\): the vector corresponding of the column \(j\) in the matrix \(M\) \\
+%\end{itemize}
 
+We define the admittance matrix \(\mathcal{Y}\) as follows:
 
-\begin{equation}
-\begin{small}
-\begin{array}{lll}
-    \min\limits_{v, S} & \sum\limits_{g\in G}c_g\mathbf{Re(S_g)}+k_g& \\[4mm]
-    s.c. & \mathbf{S_n} = S_n^{d} + \sum\limits_{l=(n,d)}(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
-         & - \sum\limits_{l=(o,n)}(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
-         & P_n^{min} \leq \mathbf{Re(S_n)}\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
-         & Q_n^{min} \leq \mathbf{Im(S_n)}\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
-         & \mathbf{S_n}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
-         & (v_n^{min})^2 \leq \mathbf{|v_n|^2} \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
-         & |i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-         & |i^{dest(1)}\mathbf{v_{ol}} + i^{dest{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-         & \mathbf{v_n} \in \mathbb{C}, \mathbf{S_n} \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
-\end{array}
-\end{small}
-\label{OPF2}
-\end{equation}
-
-with
-\[
-    \begin{array}{ll}
-        S^{orig(1)}_l =& \frac{\overline{y_l} - \mathbf{j}b_l}{\tau^2_l} \\
-        S^{orig(2)}_l =& -\overline{y_l}\frac{e^{\mathbf{j}\theta_l}}{\tau_l} \\
-        S^{dest(1)}_l =& \overline{y_l} - \mathbf{j}b_l \\
-        S^{dest(2)}_l =& -\overline{y_l}\frac{e^{-\mathbf{j}\theta_l}}{\tau_l} \\
-        i^{orig(1)} =& \frac{\overline{y_l} + \mathbf{j}b_l}{\tau_l^2}\\
-        i^{orig(2)} =& -\overline{y_l}\frac{e^{-\mathbf{j}\theta_l}}{\tau_l}\\
-        i^{dest(1)} =& -\overline{y_l}\frac{e^{\mathbf{j}\theta_l}}{\tau_l}\\
-        i^{dest(2)} =& \overline{y_l} + \mathbf{j}b_l\\\
-    \end{array}
-\]
-
-
-\begin{equation}
-\begin{small}
-\begin{array}{lll}
-    \min\limits_{v, S} & \sum\limits_{g\in G}c_g\mathbf{Re(S_g)}+k_g& \\[4mm]
-    s.c. & \mathbf{Re(S_n)} = Re(S_n^{d}) + \sum\limits_{l=(n,d)}Re(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
-         & - \sum\limits_{l=(o,n)}Re(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
-         \\
-         & \mathbf{Im(S_n)} = Im(S_n^{d}) + \sum\limits_{l=(n,d)}Im(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
-         & - \sum\limits_{l=(o,n)}Im(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
-         \\
-         & P_n^{min} \leq \mathbf{Re(S_n)}\leq P_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in G\\[2mm]
-         & Q_n^{min} \leq \mathbf{Im(S_n)}\leq Q_n^{max} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \in G\\[2mm]
-         & \mathbf{Re(S_n)}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
-         & \mathbf{Im(S_n)}=0  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  \forall n \notin G\\[2mm]
-         & (v_n^{min})^2 \leq \mathbf{|v_n|^2} \leq (v_n^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N \\[2mm]
-         & |i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-         & |i^{dest(1)}\mathbf{v_{ol}} + i^{dest{(2)}}\mathbf{v_{dl}}|^2 \leq (i_{l}^{max})^2 ~~~~~~~~~~~~~~~~~~~~~~~ \forall l \in B\\[2mm]
-         & \mathbf{v_n} \in \mathbb{C}, \mathbf{S_n} \in \mathbb{C} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \forall n \in N.
-\end{array}
-\end{small}
-\label{OPF real}
-\end{equation}
-\newpage
-Using the matrix:
-
-\[
-    V = \begin{pmatrix}
-        Re(v_1)^2       & Re(v_1)Im(v_1) & Re(v_1)Re(v_2) & Re(v_1)Im(v_2) & \ldots\\
-        Re(v_1)Im(v_1)  & Im(v_1)^2      & Im(v_1)Re(v_2) & Im(v_1)Im(v_2) & \ldots\\
-        Re(v_1)Re(v_2)  & Im(v_1)Re(v_2) & Re(v_2)^2      & Re(v_2)Im(v_2) & \ldots\\
-        Re(v_1)Im(v_2)  & Im(v_1)Im(v_2) & Re(v_2)Im(v_2) & Im(v_2)^2      & \ldots\\
-        \vdots          & \vdots         & \vdots         & \vdots         & \ddots\\
-    \end{pmatrix}
-\]
-
-and the equalities:
 
 \[
     \begin{array}{lll}
-        |v_n|^2 &= Re(v_n)^2 + Im(v_n)^2 \\
-        v_n\overline{v_d} &= Im(v_n)Im(v_d) + Re(v_n)Re(v_d) + \mathbf{j}(Im(v_n)Re(v_d) - Re(v_n)Im(v_d)) \\
-        v_n\overline{v_o} &= Im(v_n)Im(v_o) + Re(v_n)Re(v_o) + \mathbf{j}(Im(v_n)Re(v_o) - Re(v_n)Im(v_o))
+        \forall b \in \mathcal{B} & \mathcal{Y}_{bb} &= A_b + \sum\limits_{(b, a, h) \in \mathcal{L}_0} Y^{ff}_{bah} + \sum\limits_{(b, a, h) \in \mathcal{L}_1} Y^{tt}_{abh}\\
+        \forall b, a \in \mathcal{B}, b \neq a & \mathcal{Y}_{ba} &= \sum\limits_{(b,a,h) \in \mathcal{L}_0} Y^{ft}_{bah} + \sum\limits_{(b,a,h) \in \mathcal{L}_1} Y^{tf}_{abh}
     \end{array}
 \]
 
-We can then express the model using the power variables \(S_n\) and the coefficient in the matrix \(V\).
+\section{Power Balance}
+
+Let \(\mathcal{Y}_b\) the matrix \(\mathcal{Y}\) with only zeros except for the row \(b\)
+
+
+We have:
+\[
+    \mathbf{\Psi}_b =
+    \frac{1}{2}\begin{bmatrix}
+        \mathcal{Y}_b^r + \mathcal{Y}_b^{rT} & \mathcal{Y}_b^{cT} - \mathcal{Y}_b^c \\
+        \mathcal{Y}_b^c - \mathcal{Y}_b^{cT} & \mathcal{Y}_b^r + \mathcal{Y}_b^{rT}
+    \end{bmatrix}
+\]
+
+and
+
+\[
+    \hat{\mathbf{\Psi}}_b =
+    -\frac{1}{2}\begin{bmatrix}
+        \mathcal{Y}_b^c + \mathcal{Y}_b^{cT} & \mathcal{Y}_b^r - \mathcal{Y}_b^{rT} \\
+        \mathcal{Y}_b^{rT} - \mathcal{Y}_b^r & \mathcal{Y}_b^c + \mathcal{Y}_b^{cT}
+    \end{bmatrix}
+\]
+
+Which gives us
+\[
+    \mathbf{\Psi}_b =
+    \frac{1}{2}
+    \begin{bmatrix}
+        \begin{bmatrix}
+            & & & Y_b^r[1] & \\
+            & & & Y_b^r[2] & \\
+            & & & \vdots & \\
+            Y_b^r[1] & Y_b^r[2] & \cdots & 2 Y_b^r[b] & \cdots & Y_b^r[n]\\
+            & & & \vdots & \\
+            & & & Y_b^r[n] &
+        \end{bmatrix} &
+        \begin{bmatrix}
+            & & & Y_b^c[1] & \\
+            & & & Y_b^c[2] & \\
+            & & & \vdots & \\
+            -Y_b^c[1] & -Y_b^c[2] & \cdots & 0 & \cdots & -Y_b^c[n]\\
+            & & & \vdots & \\
+            & & & Y_b^c[n] &
+        \end{bmatrix} \\ \\
+        \begin{bmatrix}
+            & & & -Y_b^c[1] & \\
+            & & & -Y_b^c[2] & \\
+            & & & \vdots & \\
+            Y_b^c[1] & Y_b^c[2] & \cdots & 0 & \cdots & Y_b^c[n]\\
+            & & & \vdots & \\
+            & & & -Y_b^c[n] &
+        \end{bmatrix} &
+        \begin{bmatrix}
+            & & & Y_b^r[1] & \\
+            & & & Y_b^r[2] & \\
+            & & & \vdots & \\
+            Y_b^r[1] & Y_b^r[2] & \cdots & 2 Y_b^r[b] & \cdots & Y_b^r[n]\\
+            & & & \vdots & \\
+            & & & Y_b^r[n] &
+        \end{bmatrix}
+    \end{bmatrix}
+\]
+
+and
+\[
+    \mathbf{\hat{\Psi}}_b =
+    -\frac{1}{2}\begin{bmatrix}
+        \begin{bmatrix}
+            & & & Y_b^c[1] & \\
+            & & & Y_b^c[2] & \\
+            & & & \vdots & \\
+            Y_b^c[1] & Y_b^c[2] & \cdots & 2 Y_b^c[b] & \cdots & Y_b^c[n]\\
+            & & & \vdots & \\
+            & & & Y_b^c[n] &
+        \end{bmatrix} &
+        \begin{bmatrix}
+            & & & - Y_b^r[1] & \\
+            & & & - Y_b^r[2] & \\
+            & & & \vdots & \\
+            Y_b^r[1] & Y_b^r[2] & \cdots & 0 & \cdots & Y_b^r[n]\\
+            & & & \vdots & \\
+            & & & - Y_b^r[n] &
+        \end{bmatrix} \\ \\
+        \begin{bmatrix}
+            & & & Y_b^r[1] & \\
+            & & & Y_b^r[2] & \\
+            & & & \vdots & \\
+            -Y_b^r[1] & -Y_b^r[2] & \cdots & 0 & \cdots & -Y_b^r[n]\\
+            & & & \vdots & \\
+            & & & Y_b^r[n] &
+        \end{bmatrix} &
+        \begin{bmatrix}
+            & & & Y_b^c[1] & \\
+            & & & Y_b^c[2] & \\
+            & & & \vdots & \\
+            Y_b^c[1] & Y_b^c[2] & \cdots & 2 Y_b^c[b] & \cdots & Y_b^c[n]\\
+            & & & \vdots & \\
+            & & & Y_b^c[n] &
+        \end{bmatrix}
+    \end{bmatrix}
+\]
+
+
+\[
+    \begin{array}{ll}
+    \tilde{S}_b + Tr(\mathbf{\Psi}_b W) + iTr(\mathbf{\hat{\Psi}}_b W) = \sum\limits_{g \in \mathcal{G}_b} \mathcal{S}_g \\
+                                                                     \Leftrightarrow \\
+    \tilde{S}_b &\\
+    + \sum\limits_{i=1}^n \mathcal{Y}[b, i]^r (W[b, i] + W[b + n, n + i]) + \sum\limits_{i=1, i \neq b}^n \mathcal{Y}[b, i]^c (W[n + b, i] - W[n + i, b]) &\\
+    - i\left(\sum\limits_{i=1}^n \mathcal{Y}[b, i]^c (W[b, i] + W[b + n, n + i]) + \sum\limits_{i=1, i \neq b}^n \mathcal{Y}[b, i]^r (- W[n + b, i] + W[n + i, b]) \right) &\\
+    = \sum\limits_{g \in \mathcal{G}_b} \mathcal{S}_g \\
+    \end{array}
+\]
+
+\section{Power limits}
+
+We have
+
+\[
+    \Phi_{bah} := \left\{
+        \begin{array}{ll}
+            Y^{ff}_{bah}e_be_b^T + Y^{ft}_{bah}e_be_a^T, &if\ (b, a, h) \in \mathcal{L}_0 \\
+            Y^{tt}_{abh}e_be_b^T + Y^{tf}_{abh}e_be_a^T, &if\ (b, a, h) \in \mathcal{L}_1
+        \end{array}
+        \right\}
+\]
+
+\[
+    {\Phi_{bah}}^{\mathcal{L}_0} =
+    \begin{bmatrix}
+                & \vdots        &        & \vdots       &              \\
+        \cdots  & Y^{ff}_{bah}  & \cdots & Y^{ft}_{bah} & \cdots\\
+                & \vdots        &        & \vdots       &              \\
+                & \vdots        &        & \vdots       &              \\
+                & \vdots        &        & \vdots       &              \\
+    \end{bmatrix}
+\]
+
+\[
+    {\Phi_{bah}}^{\mathcal{L}_1} =
+    \begin{bmatrix}
+                & \vdots        &        & \vdots       &              \\
+        \cdots  & Y^{tt}_{bah}  & \cdots & Y^{tf}_{bah} & \cdots\\
+                & \vdots        &        & \vdots       &              \\
+                & \vdots        &        & \vdots       &              \\
+                & \vdots        &        & \vdots       &              \\
+    \end{bmatrix}
+\]
+
+\[
+    \mathbf{\Phi}_{bah} := 
+    \frac{1}{2}
+    \begin{bmatrix}
+        \Phi_{bah}^r + \Phi_{bah}^{rT} & \Phi_{bah}^{cT} - \Phi_{bah}^{c}\\
+        \Phi_{bah}^{c} - \Phi_{bah}^{cT} & \Phi_{bah}^r + \Phi_{bah}^{rT}
+    \end{bmatrix}
+\]
+\[
+    \mathbf{\hat{\Phi}}_{bah} := 
+    -\frac{1}{2}
+    \begin{bmatrix}
+        \Phi_{bah}^c + \Phi_{bah}^{cT} & \Phi_{bah}^{r} - \Phi_{bah}^{rT}\\
+        \Phi_{bah}^{rT} - \Phi_{bah}^{r} & \Phi_{bah}^c + \Phi_{bah}^{cT}
+    \end{bmatrix}
+\]
+
+\[
+    {\mathbf{\Phi}_{bah}}^{\mathcal{L}_0} =
+    \frac{1}{2}
+    \begin{bmatrix}
+    \begin{bmatrix}
+                & \vdots              &        & \vdots           &              \\
+        \cdots  & 2 {Y^{ff}_{bah}}^r  & \cdots & {Y^{ft}_{bah}}^r & \cdots       \\
+                & \vdots              &        & \vdots           &              \\
+                & {Y^{ft}_{bah}}^r    &        & \vdots           &              \\
+                & \vdots              &        & \vdots           &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & -{Y^{ft}_{bah}}^c    & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & {Y^{ft}_{bah}}^c  &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} \\ \\
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & {Y^{ft}_{bah}}^c     & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & -{Y^{ft}_{bah}}^c &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots                &        & \vdots           &              \\
+        \cdots  & 2 {Y^{ff}_{bah}}^r    & \cdots & {Y^{ft}_{bah}}^r & \cdots       \\
+                & \vdots                &        & \vdots           &              \\
+                & {Y^{ft}_{bah}}^r      &        & \vdots           &              \\
+                & \vdots                &        & \vdots           &              \\
+    \end{bmatrix} &
+    \end{bmatrix}
+\]
+
+\[
+    {\mathbf{\Phi}_{bah}}^{\mathcal{L}_1} =
+    -\frac{1}{2}
+    \begin{bmatrix}
+    \begin{bmatrix}
+                & \vdots              &        & \vdots           &              \\
+        \cdots  & 2 {Y^{tt}_{bah}}^r  & \cdots & {Y^{tf}_{bah}}^r & \cdots       \\
+                & \vdots              &        & \vdots           &              \\
+                & {Y^{tf}_{bah}}^r    &        & \vdots           &              \\
+                & \vdots              &        & \vdots           &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & -{Y^{tf}_{bah}}^c    & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & {Y^{tf}_{bah}}^c  &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} \\ \\
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & {Y^{tf}_{bah}}^c     & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & -{Y^{tf}_{bah}}^c &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots                &        & \vdots           &              \\
+        \cdots  & 2 {Y^{tt}_{bah}}^r    & \cdots & {Y^{tf}_{bah}}^r & \cdots       \\
+                & \vdots                &        & \vdots           &              \\
+                & {Y^{tf}_{bah}}^r      &        & \vdots           &              \\
+                & \vdots                &        & \vdots           &              \\
+    \end{bmatrix} &
+    \end{bmatrix}
+\]
+
+\[
+    {\mathbf{\hat{\Phi}}_{bah}}^{\mathcal{L}_0} =
+    \frac{1}{2}
+    \begin{bmatrix}
+    \begin{bmatrix}
+                & \vdots              &        & \vdots           &              \\
+        \cdots  & 2 {Y^{ff}_{bah}}^c  & \cdots & {Y^{ft}_{bah}}^c & \cdots       \\
+                & \vdots              &        & \vdots           &              \\
+                & {Y^{ft}_{bah}}^c    &        & \vdots           &              \\
+                & \vdots              &        & \vdots           &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & {Y^{ft}_{bah}}^r    & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & -{Y^{ft}_{bah}}^r  &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} \\ \\
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & -{Y^{ft}_{bah}}^r     & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & {Y^{ft}_{bah}}^r &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots                &        & \vdots           &              \\
+        \cdots  & 2 {Y^{ff}_{bah}}^c    & \cdots & {Y^{ft}_{bah}}^c & \cdots       \\
+                & \vdots                &        & \vdots           &              \\
+                & {Y^{ft}_{bah}}^c      &        & \vdots           &              \\
+                & \vdots                &        & \vdots           &              \\
+    \end{bmatrix} &
+    \end{bmatrix}
+\]
+
+\[
+    {\mathbf{\hat{\Phi}}_{bah}}^{\mathcal{L}_1} =
+    -\frac{1}{2}
+    \begin{bmatrix}
+    \begin{bmatrix}
+                & \vdots              &        & \vdots           &              \\
+        \cdots  & 2 {Y^{tt}_{bah}}^c  & \cdots & {Y^{tf}_{bah}}^c & \cdots       \\
+                & \vdots              &        & \vdots           &              \\
+                & {Y^{tf}_{bah}}^c    &        & \vdots           &              \\
+                & \vdots              &        & \vdots           &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & {Y^{tf}_{bah}}^r    & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & -{Y^{tf}_{bah}}^r  &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} \\ \\
+    \begin{bmatrix}
+                & \vdots            &        & \vdots               &              \\
+        \cdots  & 0                 & \cdots & -{Y^{tf}_{bah}}^r     & \cdots\\
+                & \vdots            &        & \vdots               &              \\
+                & {Y^{tf}_{bah}}^r &        & \vdots               &              \\
+                & \vdots            &        & \vdots               &              \\
+    \end{bmatrix} &
+    \begin{bmatrix}
+                & \vdots                &        & \vdots           &              \\
+        \cdots  & 2 {Y^{tt}_{bah}}^c    & \cdots & {Y^{tf}_{bah}}^c & \cdots       \\
+                & \vdots                &        & \vdots           &              \\
+                & {Y^{tf}_{bah}}^c      &        & \vdots           &              \\
+                & \vdots                &        & \vdots           &              \\
+    \end{bmatrix} &
+    \end{bmatrix}
+\]
+
 
 \[
     \begin{array}{c}
-        Re(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+        {Tr(\mathbf{\Phi}_{bah}W)}_{\mathcal{L}_0}\\
         =\\
-        Re(S^{orig(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Re(S^{orig(2)}_l)(\mathbf{Im(v_n)Im(v_d)} + \mathbf{Re(v_n)Re(v_d)})
+        {Y^{ff}_{bah}}^r(W[b, b] + W[n + b, n + b]) + {Y^{ft}_{bah}}^r(W[b, a] + W[n + b, n + a]) + {Y^{ft}_{bah}}^c(W[n + b, a]) - W[b, n + a])
     \end{array}
 \]
 
 \[
     \begin{array}{c}
-        Im(S^{orig(1)}_l\mathbf{|v_n|^2} + S^{orig(2)}_l\mathbf{v_n\overline{v_d}})\\
+        {Tr(\mathbf{\Phi}_{bah}W)}_{\mathcal{L}_1}\\
         =\\
-        Im(S^{orig(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Im(S^{orig(2)}_l)(\mathbf{Im(v_n)Re(v_d)} + \mathbf{Re(v_n)Im(v_d)})
+        -({Y^{tt}_{bah}}^r(W[b, b] + W[n + b, n + b]) + {Y^{tf}_{bah}}^r(W[b, a] + W[n + b, n + a]) + {Y^{tf}_{bah}}^c(W[n + b, a]) - W[b, n + a]))
     \end{array}
 \]
 
 \[
     \begin{array}{c}
-        Re(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+        {Tr(\mathbf{\hat{\Phi}}_{bah}W)}_{\mathcal{L}_0}\\
         =\\
-        Re(S^{dest(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Re(S^{dest(2)}_l)(\mathbf{Im(v_n)Im(v_o)} + \mathbf{Re(v_n)Re(v_o)})
+        {Y^{ff}_{bah}}^c(W[b, b] + W[n + b, n + b]) + {Y^{ft}_{bah}}^c(W[b, a] + W[n + b, n + a]) + {Y^{ft}_{bah}}^r(-W[n + b, a]) + W[b, n + a])
     \end{array}
 \]
 
 \[
     \begin{array}{c}
-        Im(S^{dest(1)}_l\mathbf{|v_n|^2} + S^{dest(2)}_l\mathbf{v_n\overline{v_o}})\\
+        {Tr(\mathbf{\hat{\Phi}}_{bah}W)}_{\mathcal{L}_1}\\
         =\\
-        Im(S^{dest(1)}_l)(\mathbf{Re(v_n)^2} + \mathbf{Im(v_n)^2}) + Im(S^{dest(2)}_l)(\mathbf{Im(v_n)Re(v_o)} - \mathbf{Re(v_n)Im(v_o)})
+        -({Y^{tt}_{bah}}^c(W[b, b] + W[n + b, n + b]) + {Y^{tf}_{bah}}^c(W[b, a] + W[n + b, n + a]) + {Y^{tf}_{bah}}^r(-W[n + b, a]) + W[b, n + a]))
     \end{array}
 \]
 
+
+
+\section{\(\mathbf{\Theta}\) and \(\mathbf{\hat{\Theta}}\) equations}
+
 \[
-    \begin{array}{c}
-        Re(i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}})\\
-        =\\
-        Re(i^{orig(1)})\mathbf{Re(v_{ol})} + Im(i^{orig(1)})\mathbf{Im(v_{ol})}
-        +
-        Re(i^{orig(2)})\mathbf{Re(v_{dl})} + Im(i^{orig(2)})\mathbf{Im(v_{dl})}
-    \end{array}
+    \mathbf{\Theta} = 
+    \frac{1}{2}
+    \begin{bmatrix}
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & 1 & . \\
+            . & 1 & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} &
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} \\ \\
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} &
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & 1 & . \\
+            . & 1 & . & . \\
+            . & . & . & . \\
+        \end{bmatrix}
+    \end{bmatrix}
+\]
+
+
+
+
+\[
+    \mathbf{\hat{\Theta}} = 
+    -\frac{1}{2}
+    \begin{bmatrix}
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} &
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & 1 & . \\
+            . & -1 & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} \\ \\
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & -1 & . \\
+            . & 1 & . & . \\
+            . & . & . & . \\
+        \end{bmatrix} &
+        \begin{bmatrix}
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+            . & . & . & . \\
+        \end{bmatrix}
+    \end{bmatrix}
 \]
 
 \[
-    \begin{array}{c}
-        Im(i^{orig(1)}\mathbf{v_{ol}} + i^{orig{(2)}}\mathbf{v_{dl}})\\
-        =\\
-        Re(i^{orig(1)})\mathbf{Im(v_{ol})} + Im(i^{orig(1)})\mathbf{Re(v_{ol})} + Re(i^{orig(2)})\mathbf{Im(v_{dl})} + Im(i^{orig(2)})\mathbf{Re(v_{dl})}
+    Tr(\mathbf{\Theta_{ba}}W) = W[b, a] + W[n + b, n + a]
+\]
 
-    \end{array}
+\[
+    Tr(\mathbf{\hat{\Theta}_{ba}}W) = - W[b, n + a] + W[n + b, a]
+\]
+
+\[
+    Tr(\mathbf{\Theta_{bb}}W) = W[b, b] + W[n + b, n + b]
+\]
+
+\[
+    Tr(\mathbf{\hat{\Theta}_{bb}}W) = 0
 \]
 
 
