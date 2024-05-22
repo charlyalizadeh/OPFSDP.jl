@@ -16,5 +16,5 @@ function cholesky_extension(adj::SparseMatrixCSC)
 end
 
 function cholesky_extension(network::PowerFlowNetwork)
-    return choleskly_extension(adjacency_matrix(network))
+    return cholesky_extension(adjacency_matrix(network))
 end
