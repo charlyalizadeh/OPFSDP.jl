@@ -61,6 +61,7 @@ export compute_current_origin, compute_current_destination
 export compute_powers, compute_power_from, compute_power_to, str_power_from, str_power_to
 export get_branches_in, get_branches_out
 export display_opf
+export chordal_extension
 export solve!
 
 end

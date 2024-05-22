@@ -13,3 +13,7 @@ mutable struct MinimumDegreeExtension <: AbstractChordalExtension end
 function chordal_extension(network::PowerFlowNetwork, alg::CholeskyExtension)
     return cholesky_extension(network)
 end
+
+function chordal_extension(adj::SparseMatrixCSC, alg::CholeskyExtension)
+    return cholesky_extension(adj)
+end
