@@ -104,7 +104,7 @@ function _add_gencost_data!(network, case_dict)
 end
 
 
-function read_rawgo(path::AbstractPath)
+function read_rawgo(path::AbstractString)
     file = read(open(path, "r"), String)
     lines = split(file, '\n')
     network = PowerFlowNetwork()
