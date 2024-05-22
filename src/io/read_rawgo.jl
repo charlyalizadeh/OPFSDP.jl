@@ -104,8 +104,6 @@ function _add_gencost_data!(network, case_dict)
     line_nb = _arg_gencost(lines) + 1
     order = network.generators_order
     index_dict = Dict(k => 1 for k in order)
-
-    for i in 
 end
 
 
