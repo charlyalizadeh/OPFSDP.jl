@@ -21,7 +21,6 @@ include("utils/graphs.jl")
 include("display/display_opf.jl")
 include("decompose/cliques.jl")
 include("decompose/cliquetree.jl")
-include("decompose/chordal.jl")
 include("decompose/extension/extension.jl")
 include("decompose/merge/merge.jl")
 
