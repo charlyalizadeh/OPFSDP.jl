@@ -1,5 +1,5 @@
 function read_network(path::AbstractString)
-    ext = splitext(path)
+    filename, ext = splitext(path)
     if ext == ".m"
         return read_matpower(path)
     elseif ext == ".raw"
