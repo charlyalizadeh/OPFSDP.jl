@@ -65,6 +65,7 @@ export compute_powers, compute_power_from, compute_power_to, str_power_from, str
 export get_branches_in, get_branches_out
 export display_opf
 export chordal_extension
+export merge_cliques!, merge_molzahn!
 export solve!
 
 end
