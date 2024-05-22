@@ -1,7 +1,6 @@
 module OPFSDP
 
 using JuMP
-#using Ipopt
 using Mosek
 using MosekTools
 using SparseArrays
@@ -21,7 +20,8 @@ include("display/display_opf.jl")
 include("decompose/cliques.jl")
 include("decompose/cliquetree.jl")
 include("decompose/chordal.jl")
-include("decompose/extension/cholesky.jl")
+include("decompose/extension/extension.jl")
+include("decompose/merge/merge.jl")
 
 using .ReadMatpower
 
