@@ -187,16 +187,6 @@ end
 
 
 """
-    pmdo = perfect_minimum_degree_ordering(adj)
-
-Return a perfect minimum degree ordering of the graph build from the power model `pm`
-"""
-function perfect_minimum_degree_ordering(pm::AbstractSparseSDPWRMModel, nw::Int=nw_id_default)
-    adj, lookup_index = adjacency_matrix(pm, nw)
-    return perfect_minimum_degree_ordering(adj), lookup_index
-end
-
-"""
     make_subgraph_complete!(adj, vertices)
 
 Make the subgraph of `adj` composed of the vertices in `vertices` complete.
