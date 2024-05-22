@@ -46,7 +46,7 @@ Modify `maximal_cliques` by deleting the cliques at index `i` and `k` and adding
 Return the modified clique_tree where the cliques at index `i` and `k` are merged.
 """
 function merge_clique!(i, k, clique, maximal_cliques, clique_tree)
-	neighbors = union(_neighbors(clique_tree, i; exclude=[i, k]), neighbors(clique_tree, k; exclude=[i, k]))
+	neighbors = union(neighbors(clique_tree, i; exclude=[i, k]), neighbors(clique_tree, k; exclude=[i, k]))
     neighbors = map(n -> n - (n > i) - (n > k), neighbors)
 
     deleteat!(maximal_cliques, [i, k])
