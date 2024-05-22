@@ -46,7 +46,7 @@ Modify `maximal_cliques` by deleting the cliques at index `i` and `k` and adding
 Return the modified clique_tree where the cliques at index `i` and `k` are merged.
 """
 function merge_clique!(i, k, clique, maximal_cliques, clique_tree)
-	_neighbors = union(neighbors(clique_tree, i; exclude=[i, k]), neighbors(clique_tree, k; exclude=[i, k]))
+    _neighbors = union(neighbors(clique_tree, i; exclude=[i, k]), neighbors(clique_tree, k; exclude=[i, k]))
     _neighbors = map(n -> n - (n > i) - (n > k), _neighbors)
 
     deleteat!(maximal_cliques, [i, k])
@@ -57,9 +57,9 @@ function merge_clique!(i, k, clique, maximal_cliques, clique_tree)
     clique_tree = [clique_tree; zeros(clique_tree.n)']
     clique_tree = [clique_tree zeros(clique_tree.m)]
     for n in _neighbors
-		weight = length(intersect(maximal_cliques[n], maximal_cliques[end]))
+        weight = length(intersect(maximal_cliques[n], maximal_cliques[end]))
         clique_tree[n, end] = weight
-		clique_tree[end, n] = weight
+        clique_tree[end, n] = weight
     end
     return clique_tree
 end
@@ -72,18 +72,18 @@ Apply the Molzahn et al. merging alogrithm to the chordal graph represented by `
 `L` is a percentage of the number of cliques in `maximal_cliques`. It is used to stop the merging.
 """
 function merge_molzahn!(cadj, maximal_cliques, clique_tree, L::Float64=0.1)
-	treshold = L * length(maximal_cliques)
-	if treshold < 2
-		treshold = 2
-	end
+    treshold = L * length(maximal_cliques)
+    if treshold < 2
+        treshold = 2
+    end
     while length(maximal_cliques) > treshold
         costs = compute_merge_cost_all(maximal_cliques, clique_tree)
         i, k, cost = argmin(x -> x[3], costs)
-		clique = union(maximal_cliques[i], maximal_cliques[k])
+        clique = union(maximal_cliques[i], maximal_cliques[k])
         clique_tree = merge_clique!(i, k, clique, maximal_cliques, clique_tree)
     end
-	for c in maximal_cliques
-		_make_subgraph_complete!(cadj, c)
-	end
+    for c in maximal_cliques
+        make_subgraph_complete!(cadj, c)
+    end
 end
 merge_cliques!(cadj, maximal_cliques, clique_tree, merge_alg::MolzahnMerge) = merge_molzahn!(cadj, maximal_cliques, clique_tree, merge_alg.L)
