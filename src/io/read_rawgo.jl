@@ -21,7 +21,7 @@ end
 
 function _get_line_values(line)
     line_split = split(line, ',')
-    values = [i == 2 ? l: parse(Float64, l) for (i, l) in enumerate(line_split)]
+    values = [i == 2 ? l : parse(Float64, l) for (i, l) in enumerate(line_split)]
     return values
 end
 
@@ -101,9 +101,6 @@ end
 
 
 function _add_gencost_data!(network, case_dict)
-    line_nb = _arg_gencost(lines) + 1
-    order = network.generators_order
-    index_dict = Dict(k => 1 for k in order)
 end
 
 
