@@ -143,7 +143,7 @@ Return `true` if the adjacency matrix `adj` corresponds to a chordal graph.
 function check_chordal(adj::SparseMatrixCSC)
     peo = mcs(adj)
     for i in 1:length(peo)-1
-        if !_check_neighboor_complete(adj, peo[i], peo[i:end])
+        if !check_neighboor_complete(adj, peo[i], peo[i:end])
             return false
         end
     end
