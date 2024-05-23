@@ -65,8 +65,8 @@ function prim(A)
     while length(unvisited) > 1
         current_node = next_node
         filter!(node -> node != current_node, unvisited)
-        neighbors = intersect(findall(x->x!=0, A[:, current_node]), unvisited)
-        current_node_edges = [(current_node, i) for i in neighbors]
+        _neighbors = intersect(findall(x->x!=0, A[:, current_node]), unvisited)
+        current_node_edges = [(current_node, i) for i in _neighbors]
         append!(candidate_edges, current_node_edges)
         filter!(edge -> length(intersect(edge, unvisited)) == 1, candidate_edges)
         weights = [A[edge...] for edge in candidate_edges]
@@ -123,10 +123,10 @@ end
 Return `true` if the neighbors of `v` in the subgraph of `adj` formed by the vertices in `v_sub` is a complete graph.
 """
 function check_neighboor_complete(adj::SparseMatrixCSC, v::Int, v_sub::Vector{Int}=1:adj.n)
-    neighbors = filter(n -> n in v_sub, neighbors(adj, v))
-    for i in 1:length(neighbors)-1
-        for j in i+1:length(neighbors)
-            if adj[neighbors[i], neighbors[j]] == 0
+    _neighbors = filter(n -> n in v_sub, neighbors(adj, v))
+    for i in 1:length(_neighbors)-1
+        for j in i+1:length(_neighbors)
+            if adj[_neighbors[i], _neighbors[j]] == 0
                 return false
             end
         end
@@ -157,11 +157,11 @@ end
 Make the neighborhood of `v` complete in `adj`.
 """
 function make_neighborhood_complete!(adj::SparseMatrixCSC, v::Int)
-    neighbors = neighbors(adj, v)
-    for i in 1:length(neighbors) - 1
-        for j in i+1:length(neighbors)
-            adj[neighbors[i], neighbors[j]] = 1.0
-            adj[neighbors[j], neighbors[i]] = 1.0
+    _neighbors = neighbors(adj, v)
+    for i in 1:length(_neighbors) - 1
+        for j in i+1:length(_neighbors)
+            adj[_neighbors[i], _neighbors[j]] = 1.0
+            adj[_neighbors[j], _neighbors[i]] = 1.0
         end
     end
 end
