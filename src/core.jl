@@ -29,6 +29,7 @@ mutable struct Generator
 	busid::Int
     genid::Int
     genorder::Int
+    status::Int
 	power::Complex
 	Pmin::Float64
 	Pmax::Float64
@@ -39,13 +40,13 @@ mutable struct Generator
     active_cost_type::Union{CostType,Nothing}
     reactive_cost_type::Union{CostType,Nothing}
 
-	function Generator(id::Int, genid::Int, genorder::Int,
+	function Generator(id::Int, genid::Int, genorder::Int, status::Int=1,
                        power::Complex=complex(0., 0.),
                        Pmin::Float64=0., Pmax::Float64=0.,
                        Qmin::Float64=0., Qmax::Float64=0.,
 					   active_cost_coeff::Vector{Float64}=Float64[], reactive_cost_coeff::Vector{Float64}=Float64[],
                        active_cost_type::Union{CostType,Nothing}=nothing, reactive_cost_type::Union{CostType,Nothing}=nothing)
-		new(id, genid, genorder, power, Pmin, Pmax, Qmin, Qmax, active_cost_coeff, reactive_cost_coeff, active_cost_type, reactive_cost_type)
+		new(id, genid, genorder, status, power, Pmin, Pmax, Qmin, Qmax, active_cost_coeff, reactive_cost_coeff, active_cost_type, reactive_cost_type)
 	end
 end
 
@@ -55,8 +56,8 @@ mutable struct Branch
     r::Float64
     x::Float64
     b::Float64
-	tf_ratio::Float64
-	tf_ps_angle::Float64
+	ratio::Float64
+	angle::Float64
 	rateA::Float64
 	rateB::Float64
 	rateC::Float64
@@ -67,6 +68,7 @@ Base.copy(b::Branch) = Branch(b.from, b.to, b.r, b.x, b.b, b.tf_ratio, b.tf_ps_a
 
 mutable struct PowerFlowNetwork
 	name::String
+    Sbase::Float64
 	buses::Dict{Int,Bus}
     buses_order::Vector{Int}
 	branches::Vector{Branch}
@@ -74,14 +76,14 @@ mutable struct PowerFlowNetwork
     generators_order::Vector{Int}
     ngen::Int
 
-    function PowerFlowNetwork(name::String="",
+    function PowerFlowNetwork(name::String="", Sbase::Float64=100.0,
                               buses::Dict{Int,Bus}=Dict{Int,Bus}(),
                               buses_order::Vector{Int}=Int[],
                               branches::Vector{Branch}=Branch[],
                               generators::Dict{Int,Vector{Generator}}=Dict{Int,Vector{Generator}}(),
                               generators_order::Vector{Int}=Int[],
                               ngen::Int=0)
-        new(name, buses, buses_order, branches, generators, generators_order, ngen)
+        new(name, Sbase, buses, buses_order, branches, generators, generators_order, ngen)
     end
 end
 

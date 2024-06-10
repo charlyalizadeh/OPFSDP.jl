@@ -10,6 +10,7 @@ function adjacency_matrix(network::PowerFlowNetwork)
 	return sparse(adj)
 end
 
+
 function edges(adj::SparseMatrixCSC)
 	edges_list = []
 	for i in 1:adj.n-1

@@ -1,3 +1,7 @@
+function _define_X!(model, network)
+    @variable(model, [1:nbus(network), 1:nbus(network)] in HermitianPSDCone())
+end
+
 function _define_cliques!(model, network, cliques)
     variables = Dict()
     for (i, clique) in enumerate(cliques)
@@ -15,7 +19,7 @@ function _map_X!(model, network, cliques, variables)
             end
         end
     end
-    return X
+    return DefaultDict(0, X)
 end
 
 function _define_generator_power_variables!(model, network)
@@ -38,12 +42,6 @@ function _define_flow_variables!(model, network)
         nidto = normid(network, branch.to)
         variables["S_$(nidfrom)_$(nidto)"] = @variable(model, set = ComplexPlane(), base_name = "S_$(nidfrom)_$(nidto)")
         variables["S_$(nidto)_$(nidfrom)"] = @variable(model, set = ComplexPlane(), base_name = "S_$(nidto)_$(nidfrom)")
-        if branch.rateA != 0 && !isinf(branch.rateA)
-            set_upper_bound(real(variables["S_$(nidfrom)_$(nidto)"]), branch.rateA)
-            set_upper_bound(imag(variables["S_$(nidfrom)_$(nidto)"]), branch.rateA)
-            set_lower_bound(real(variables["S_$(nidfrom)_$(nidto)"]), -branch.rateA)
-            set_lower_bound(imag(variables["S_$(nidfrom)_$(nidto)"]), -branch.rateA)
-        end
     end
     return variables
 end

@@ -73,6 +73,7 @@ function _extract_gen_data(lines, baseMVA)
         push!(gen_dict[values[1]], Generator(trunc(Int, values[1]),                             # busid
                                              genid,                                             # genid
                                              length(gen_dict[values[1]]) + 1,                   # genorder
+                                             values[8] > 0 ? 1 : 0,                             # status
                                              complex(values[2] / baseMVA, values[3] / baseMVA), # power
                                              values[10] / baseMVA,                              # Pmin
                                              values[9] / baseMVA,                               # Pmax
@@ -111,7 +112,7 @@ function _add_gencost_data!(network, lines)
 
         ncost = values[4]
         network.generators[order[i]][index_dict[order[i]]].reactive_cost_type = CostType(trunc(Int, values[1]))
-        network.generators[order[i]][index_dict[order[i]]].reactive_cost_coeff = [v * 10^(2 * (ncost - i)) for (i, v) in enumerate(values[5:end])]
+        network.generators[order[i]][index_dict[order[i]]].reactive_cost_coeff = [v #==* 10^(2 * (ncost - i))==# for (i, v) in enumerate(values[5:end])]
 
         line_nb += 1
         index_dict[order[i]] += 1
@@ -139,18 +140,30 @@ function _extract_branches(network, lines, baseMVA; convert_r_x=false, factor=no
     branches::Vector{Branch} = []
     while !occursin("];", lines[i])
         values = _get_line_values(lines[i])
-        branch = Branch(values[1],  # source bus id
-                        values[2],  # destination bus id
-                        values[3],
-                        values[4],
-                        values[5],
-                        values[9] == 0 ? 1.0 : values[9],
-                        values[10],
-                        values[6] == 0 ? 0 : values[6] / baseMVA,
-                        values[7] == 0 ? 0 : values[7] / baseMVA,
-                        values[8] == 0 ? 0 : values[8] / baseMVA,
-                        values[12], # angmin
-                        values[13]  # angmax
+        ang = values[10]
+        angmin = values[12]
+        angmax = values[13]
+        if angmin == 0 || angmin == -360
+            angmin = -90
+        end
+        if angmax == 0 || angmax == 360
+            angmax = 90
+        end
+        ang = pi * ang / 180
+        angmin = pi * angmin / 180
+        angmax = pi * angmax / 180
+        branch = Branch(values[1],                                # source bus id
+                        values[2],                                # destination bus id
+                        values[3],                                # r
+                        values[4],                                # x
+                        values[5],                                # b
+                        values[9] == 0 ? 1.0 : values[9],         # tf_ratio
+                        ang,                                      # tf_ps_angle
+                        values[6] == 0 ? 0 : values[6] / baseMVA, # rateA
+                        values[7] == 0 ? 0 : values[7] / baseMVA, # rateB
+                        values[8] == 0 ? 0 : values[8] / baseMVA, # rateC
+                        angmin,                                   # angmin
+                        angmax                                    # angmax
                        )
         push!(branches, branch)
         i += 1
@@ -177,6 +190,7 @@ function read_matpower(path::AbstractString)
     network = PowerFlowNetwork(_get_name_matpower(path))
 
     baseMVA = _extract_baseMVA(lines)
+    network.Sbase = float(baseMVA)
     network.buses, network.buses_order = _extract_bus_dict(lines, baseMVA; convert_load=convert_load)
     if convert_r_x
         vbase = refbus(network).baseKV * 1e3

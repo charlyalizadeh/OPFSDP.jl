@@ -27,36 +27,9 @@ include("decompose/merge/merge.jl")
 using .ReadMatpower
 using .ReadRawGo
 
-
-#include("solve/solve_W_old/constants.jl")
-#include("solve/solve_W_old/variables.jl")
-#include("solve/solve_W_old/objective.jl")
-#include("solve/solve_W_old/utils.jl")
-#include("solve/solve_W_old/power_balance.jl")
-#include("solve/solve_W_old/power_constraints.jl")
-#include("solve/solve_W_old/voltage_constraints.jl")
-#include("solve/solve_W_old/linking_constraints.jl")
-#include("solve/solve_W_old/save.jl")
-#include("solve/solve_W_old/solve.jl")
-
-
-include("solve/solve_W/constants.jl")
-include("solve/solve_W/variables.jl")
-include("solve/solve_W/objective.jl")
-include("solve/solve_W/utils.jl")
-include("solve/solve_W/power_balance.jl")
-include("solve/solve_W/power_balance_dict.jl")
-include("solve/solve_W/power_constraints_dict.jl")
-include("solve/solve_W/power_constraints.jl")
-include("solve/solve_W/voltage_constraints.jl")
-include("solve/solve_W/voltage_constraints_dict.jl")
-include("solve/solve_W/linking_constraints.jl")
-include("solve/solve_W/save/save_power_balance.jl")
-include("solve/solve_W/solve.jl")
-
 include("solve/solve_X/solve.jl")
 
-include("io/save_W_model.jl")
+
 
 export read_matpower, read_rawgo, read_network
 export compute_current_origin, compute_current_destination
@@ -65,6 +38,6 @@ export get_branches_in, get_branches_out
 export display_opf
 export chordal_extension
 export merge_cliques!, merge_molzahn!
-export solve!
+export solve
 
 end
