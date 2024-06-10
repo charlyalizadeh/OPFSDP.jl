@@ -24,6 +24,7 @@ function edges(adj::SparseMatrixCSC)
 end
 
 
+
 """
     peo = mcs(A)
 Maximum cardinality search for graph adjacency matrix A.

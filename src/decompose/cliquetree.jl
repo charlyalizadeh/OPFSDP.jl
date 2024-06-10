@@ -58,33 +58,29 @@ function _overlap_indices(A::Array, B::Array, symmetric=true)
 end
 
 
-"""
-    T = _prim(A, minweight=false)
-Return minimum spanning tree adjacency matrix, given adjacency matrix.
-If minweight == false, return the *maximum* weight spanning tree.
-
-Convention: start with node 1.
-"""
-function _prim(A, minweight=false)
-    n = size(A, 1)
-    candidate_edges = []
-    unvisited = collect(1:n)
-    next_node = 1 # convention
-    T = spzeros(Int, n, n)
-
-    while length(unvisited) > 1
-        current_node = next_node
-        filter!(node -> node != current_node, unvisited)
-
-        neighbors = intersect(findall(x->x!=0, A[:, current_node]), unvisited)
-        current_node_edges = [(current_node, i) for i in neighbors]
-        append!(candidate_edges, current_node_edges)
-        filter!(edge -> length(intersect(edge, unvisited)) == 1, candidate_edges)
-        weights = [A[edge...] for edge in candidate_edges]
-        next_edge = minweight ? candidate_edges[indmin(weights)] : candidate_edges[argmax(weights)]
-        filter!(edge -> edge != next_edge, candidate_edges)
-        T[next_edge...] = minweight ? minimum(weights) : maximum(weights)
-        next_node = intersect(next_edge, unvisited)[1]
+function _prim(A)
+    n = A.n
+    E = -1 * ones(Int, n)
+    F = spzeros(Int, n, n)
+    Q = PriorityQueue(Base.Order.Reverse)
+    for v in 1:n
+        enqueue!(Q, v, -100000)
     end
-    return T
+    while !isempty(Q)
+        v = dequeue!(Q)
+        for w in neighbors(A, v)
+            if w in keys(Q) && A[v, w] > Q[w]
+                Q[w] = A[v, w]
+                E[w] = v
+            end
+        end
+    end
+    for v in 1:n
+        if E[v] == -1 || F[v, E[v]] != 0
+            continue
+        end
+        F[v, E[v]] = A[v, E[v]]
+        F[E[v], v] = A[v, E[v]]
+    end
+    return F
 end
