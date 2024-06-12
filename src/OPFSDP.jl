@@ -27,7 +27,7 @@ include("decompose/merge/merge.jl")
 using .ReadMatpower
 using .ReadRawGo
 
-include("solve/solve_X/solve.jl")
+include("solve/solve_X_real/solve.jl")
 
 
 
