@@ -22,9 +22,6 @@ function _map_X!(model, network, cliques, variables)
                     X["vr($b)vc($b)"] = variables["X$clique_id"][i, clength + i]
                     X["vc($b)vr($b)"] = variables["X$clique_id"][i, clength + i]
                 else
-                    if (b == 1 && a == 2) || (b == 2 && a == 1)
-                        println("i = $i j = $j clength = $clength")
-                    end
                     X["vr($b)vr($a)"] = variables["X$clique_id"][i, j]
                     X["vr($a)vr($b)"] = variables["X$clique_id"][i, j]
 
