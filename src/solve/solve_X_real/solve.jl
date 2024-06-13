@@ -109,7 +109,7 @@ function build_model(network::PowerFlowNetwork, cliques, cliquetree)
     _define_objective_polynomial!(model, network, variables)
 
     # Constraints
-    _define_branch_current_flow_constraints!(model, network, variables, X, Y)
+    #_define_branch_current_flow_constraints!(model, network, variables, X, Y)
     _define_branch_power_flow_constraints!(model, network, variables, X, Y)
     _define_power_balance_constraints!(model, network, variables, X)
     #_define_voltage_angle_limit_constraints!(model, network, X)

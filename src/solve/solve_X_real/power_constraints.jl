@@ -61,14 +61,9 @@ function _define_branch_power_flow_constraints!(model, network, variables, X, Y)
     for branch in branches(network)
         b = normid(network, branch.from)
         a = normid(network, branch.to)
-        c = @constraint(model, variables["real(S_$(b)_$(a))"] == (real(Y["Yff"][b, a]) * variables["|v($b)|^2"] +
+        @constraint(model, variables["real(S_$(b)_$(a))"] == (real(Y["Yff"][b, a]) * variables["|v($b)|^2"] +
                                                               real(Y["Yft"][b, a]) * (X["vr($b)vr($a)"] + X["vc($b)vc($a)"]) +
                                                               imag(Y["Yft"][b, a]) * (X["vc($b)vr($a)"] - X["vr($b)vc($a)"])))
-        println("real(S_$(b)_$(a)) = $(real(Y["Yff"][b, a])) * (X[vr($b)vr($b)] + X[vc($b)vc($b)]) + $(real(Y["Yft"][b, a])) * (X[vr($b)vr($a)] + X[vc($b)vc($a)]) + $(imag(Y["Yft"][b, a])) * (X[vc($b)vr($a)] - X[vr($b)vc($a)])")
-        println("real(S_$(b)_$(a)) = $(real(Y["Yff"][b, a])) * $(variables["|v($b)|^2"]) + $(real(Y["Yft"][b, a])) * ($(X["vr($b)vr($a)"]) + $(X["vc($b)vc($a)"])) + $(imag(Y["Yft"][b, a])) * ($(X["vc($b)vr($a)"]) - $(X["vr($b)vc($a)"]))")
-        #if (b == 1 && a == 2)
-        #    println(c)
-        #end
         @constraint(model, variables["imag(S_$(b)_$(a))"] == (-imag(Y["Yff"][b, a]) * variables["|v($b)|^2"] +
                                                                real(Y["Yft"][b, a]) * (X["vc($b)vr($a)"] - X["vr($b)vc($a)"]) -
                                                                imag(Y["Yft"][b, a]) * (X["vr($b)vr($a)"] + X["vc($b)vc($a)"])))
