@@ -87,27 +87,26 @@ mutable struct PowerFlowNetwork
     end
 end
 
-generators(network::PowerFlowNetwork) = vcat([gen for gen in values(network.generators)]...)
-function generators(network::PowerFlowNetwork, bus_id)
-    if bus_id in keys(network.generators)
-        return network.generators[bus_id]
-    end
-    return []
-end
-buses(network::PowerFlowNetwork) = collect(values(network.buses))
-branches(network::PowerFlowNetwork) = network.branches
-branches(network::PowerFlowNetwork, bus_id) = [b for b in network.branches if (b.from == bus_id || b.to == bus_id)]
-branches(network::PowerFlowNetwork, bus_id1, bus_id2) = [b for b in network.branches if (b.from == bus_id1 && b.to == bus_id2) || (b.from == bus_id2 && b.to == bus_id1)]
 nbus(network::PowerFlowNetwork) = length(network.buses)
 ngen(network::PowerFlowNetwork) = network.ngen
 nbranch(network::PowerFlowNetwork) = length(network.branches)
+
+generators(network::PowerFlowNetwork) = vcat([gen for gen in values(network.generators)]...)
+generators(network::PowerFlowNetwork, bus_id) = bus_id in keys(network.generators) ? network.generators[bus_id] : []
+
+buses(network::PowerFlowNetwork) = collect(values(network.buses))
+
+branches(network::PowerFlowNetwork) = network.branches
+branches(network::PowerFlowNetwork, bus_id) = [b for b in network.branches if (b.from == bus_id || b.to == bus_id)]
+branches(network::PowerFlowNetwork, bus_id1, bus_id2) = [b for b in network.branches if (b.from == bus_id1 && b.to == bus_id2) || (b.from == bus_id2 && b.to == bus_id1)]
+
 normid(network::PowerFlowNetwork, bus_id) = findfirst(id -> id == bus_id, network.buses_order)
 trueid(network::PowerFlowNetwork, norm_id) = network.buses_order[norm_id]
+
 function refbus(network::PowerFlowNetwork)
     refbuses = filter(b -> b.type == ref, collect(values(network.buses)))
     return refbuses[1]
 end
-
 
 function hasgen(network, bus_id)
     return bus_id in keys(network.generators)
@@ -122,6 +121,5 @@ function hasbranch_directed(network, from, to)
 end
 
 function hasbranch(network, b, a)
-    return !isnothing(findifrst(b -> (b.from == b && b.to == a) || (b.to == b && b.from == a),
-                                network.branches))
+    return !isnothing(findifrst(b -> (b.from == b && b.to == a) || (b.to == b && b.from == a), network.branches))
 end

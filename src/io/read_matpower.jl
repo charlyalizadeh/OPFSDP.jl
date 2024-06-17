@@ -179,7 +179,6 @@ function check_convert_r_x(file)
     return occursin("mpc.bus(:, [PD, QD]) = mpc.bus(:, [PD, QD]) / 1e3;", file)# && !occursin("%mpc.bus(:, [PD, QD]) = mpc.bus(:, [PD, QD]) / 1e3;", file))
 end
 
-
 function read_matpower(path::AbstractString)
     file = read(open(path, "r"), String)
     convert_load = check_convert_load(file)

@@ -10,7 +10,6 @@ function adjacency_matrix(network::PowerFlowNetwork)
 	return sparse(adj)
 end
 
-
 function edges(adj::SparseMatrixCSC)
 	edges_list = []
 	for i in 1:adj.n-1
@@ -22,8 +21,6 @@ function edges(adj::SparseMatrixCSC)
 	end
 	return edges_list
 end
-
-
 
 """
     peo = mcs(A)
@@ -48,7 +45,6 @@ function mcs(A)
     end
     return peo
 end
-
 
 """
     T = prim(A)
@@ -82,7 +78,6 @@ function prim(A)
     return T
 end
 
-
 """
     A = overlap_graph(groups)
 Return adjacency matrix for overlap graph associated with `groups`.
@@ -107,7 +102,6 @@ function overlap_graph(groups)
     end
     return sparse(I, J, V, n, n)
 end
-
 
 """
     n = neighbors(adj, v; exclude)
@@ -135,7 +129,6 @@ function check_neighboor_complete(adj::SparseMatrixCSC, v::Int, v_sub::Vector{In
     end
     return true
 end
-
 
 """
     is_chordal = check_chordal(adj)
@@ -186,7 +179,6 @@ function perfect_minimum_degree_ordering(adj::SparseMatrixCSC)
     end
     return perm
 end
-
 
 """
     make_subgraph_complete!(adj, vertices)

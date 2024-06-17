@@ -1,9 +1,3 @@
-include("variables.jl")
-include("objective.jl")
-include("power_constraints.jl")
-include("voltage_constraints.jl")
-include("linking_constraints.jl")
-
 function computeY(network::PowerFlowNetwork)
     zero = 1e-10
     _nbus = nbus(network)
@@ -93,30 +87,6 @@ function computeYproducts(network, Y)
     return Dict("Yff2" => Yff2, "Yft2" => Yft2, "Ytf2" => Ytf2, "Ytt2" => Ytt2, "YffYftR" => YffYftR, "YffYftC" => YffYftC, "YtfYttR" => YtfYttR, "YtfYttC" => YtfYttC)
 end
 
-function build_model(network::PowerFlowNetwork)
-    model = Model(Mosek.Optimizer)
-    Y = computeYcomplex(network)
-
-
-    # Variables
-    X = _define_X!(model, network)
-    variables = _define_generator_power_variables!(model, network)
-    merge!(variables, _define_flow_variables!(model, network))
-
-    # Objective
-    _define_objective_polynomial!(model, network, variables)
-
-    # Constraints
-    # Power
-    _define_branch_flow_constraints!(model, network, variables, X, Y)
-    _define_power_balance_constraints!(model, network, variables, X)
-    # Voltage
-    #_define_voltage_angle_limit_constraints!(model, network, X)
-    _define_voltage_limit_constraints!(model, network, X)
-
-    return model
-end
-
 function build_model(network::PowerFlowNetwork, cliques, cliquetree)
     model = Model(Mosek.Optimizer)
     Y = computeYcomplex(network)
@@ -126,27 +96,20 @@ function build_model(network::PowerFlowNetwork, cliques, cliquetree)
     merge!(variables, _define_generator_power_variables!(model, network))
     merge!(variables, _define_flow_variables!(model, network))
     X = _map_X!(model, network, cliques, variables)
+    merge!(variables, _define_abs2_variables!(model, network, X))
 
 
     # Objective
     _define_objective_polynomial!(model, network, variables)
 
     # Constraints
-    # Power
-    _define_branch_flow_constraints!(model, network, variables, X, Y)
+    #_define_branch_current_flow_constraints!(model, network, variables, X, Y)
+    _define_branch_power_flow_constraints!(model, network, variables, X, Y)
     _define_power_balance_constraints!(model, network, variables, X)
-    # Voltage
     #_define_voltage_angle_limit_constraints!(model, network, X)
-    _define_voltage_limit_constraints!(model, network, X)
+    _define_voltage_limit_constraints!(model, network, variables, X)
     _define_linking_constraints!(model, variables, cliques, cliquetree)
 
-    return model
-end
-
-function solve(network)
-    build_time = @elapsed (model = build_model(network))
-    println("Building time: $build_time (s)")
-    optimize!(model)
     return model
 end
 

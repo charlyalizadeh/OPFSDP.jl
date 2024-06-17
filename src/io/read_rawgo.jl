@@ -18,7 +18,6 @@ function _extract_baseMVA(lines)
     return values[1]
 end
 
-
 function _get_line_values(line)
     line_split = split(line, ',')
     values = [i == 2 ? l : parse(Float64, l) for (i, l) in enumerate(line_split)]
@@ -60,7 +59,6 @@ function _add_bus_load!(lines, bus_dict, baseMVA)
     end
 end
 
-
 function _add_bus_shunt!(lines, bus_dict, baseMVA)
     i = _arg_to(lines, "END OF LOAD DATA BEGIN FIXED SHUNT DATA") + 1
 
@@ -70,7 +68,6 @@ function _add_bus_shunt!(lines, bus_dict, baseMVA)
         i += 1
     end
 end
-
 
 function _extract_gen_data(lines, baseMVA)
     i = _arg_to(lines, "END OF FIXED SHUNT DATA BEGIN GENERATOR DATA") + 1
@@ -99,10 +96,8 @@ function _extract_gen_data(lines, baseMVA)
     return gen_dict, order
 end
 
-
 function _add_gencost_data!(network, case_dict)
 end
-
 
 function read_rawgo(path::AbstractString)
     file = read(open(path, "r"), String)
