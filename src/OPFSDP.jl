@@ -37,7 +37,7 @@ export read_matpower, read_rawgo, read_network
 export display_opf
 export chordal_extension
 export merge_cliques!, merge_molzahn!
-export combine,
+export combine
 export solve
 
 end
