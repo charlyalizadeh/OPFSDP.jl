@@ -20,6 +20,7 @@ include("decompose/cliques.jl")
 include("decompose/cliquetree.jl")
 include("decompose/extension/extension.jl")
 include("decompose/merge/merge.jl")
+include("decompose/combine.jl")
 
 using .ReadMatpower
 using .ReadRawGo
@@ -36,6 +37,7 @@ export read_matpower, read_rawgo, read_network
 export display_opf
 export chordal_extension
 export merge_cliques!, merge_molzahn!
+export combine,
 export solve
 
 end

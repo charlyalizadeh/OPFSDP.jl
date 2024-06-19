@@ -22,6 +22,18 @@ function edges(adj::SparseMatrixCSC)
 	return edges_list
 end
 
+function nedge(adj::SparseMatrixCSC)
+    nedge = 0
+	for i in 1:adj.n-1
+		for j in i+1:adj.n
+			if adj[i, j] != 0 || adj[j, i] != 0
+				nedge += 1
+			end
+		end
+	end
+	return nedge
+end
+
 """
     peo = mcs(A)
 Maximum cardinality search for graph adjacency matrix A.
@@ -112,6 +124,9 @@ function neighbors(adj::SparseMatrixCSC, v::Int; exclude=[v])
 	return [i for i in 1:adj.n if (adj[v, i] != 0 || adj[i, v] != 0) && i ∉ exclude]
 end
 
+function check_complete(adj::SparseMatrixCSC)
+    nedge(adj) == ((adj.n) * (adj.n - 1)) / 2
+end
 
 """
     is_complete = check_neighboor_complete(adj, v, v_sub)
@@ -192,4 +207,54 @@ function make_subgraph_complete!(adj::SparseMatrixCSC, vertices::Vector{Int})
             adj[vertices[j], vertices[i]] = 1.0
         end
     end
+end
+
+
+function get_edges_under_dist(adj::SparseMatrixCSC, source::Int, max_dist::Int)
+    dist = ones(adj.n) * Inf
+    current_vertices = [source]
+    vertices = []
+    for i in 1:max_dist
+        next_vertices = []
+        for v in current_vertices
+            for b in neighbors(adj, v)
+                if !(b in vertices) && b != source
+                    push!(vertices, b)
+                    push!(next_vertices, b)
+                end
+            end
+        end
+        current_vertices = next_vertices
+    end
+    return vertices
+end
+
+function add_random_edge!(adj::SparseMatrixCSC, nb_edge::Int, max_dist::Int=3, max_stable_it::Int=5)
+    nedge_adj = nedge(adj)
+    nedge_max = (adj.n * (adj.n - 1)) / 2
+    stable_it = 0
+    while nb_edge > 0 && nedge_adj != nedge_max && stable_it < max_stable_it
+        v1 = rand(1:adj.n)
+        edges_choice = get_edges_under_dist(adj, v1, max_dist)
+        v2 = edges_choice[rand(1:length(edges_choice))]
+        if adj[v1, v2] == 1
+            stable_it += 1
+            continue
+        end
+        stable_it = 0
+        adj[v1, v2] = 1
+        adj[v2, v1] = 1
+        nedge_adj += 1
+        nb_edge -= 1
+    end
+end
+
+function add_random_edge_vertex!(adj::SparseMatrixCSC, nb_edge::Float64, max_dist::Int=3, max_stable_it::Int=5)
+    nb_edge_int = trunc(Int, nb_edge * adj.n)
+    add_random_edge!(adj, nb_edge_int, max_dist, max_stable_it)
+end
+
+function add_random_edge_edge!(adj::SparseMatrixCSC, nb_edge::Float64, max_dist::Int=3, max_stable_it::Int=5)
+    nb_edge_int = trunc(Int, nb_edge * nedge(adj))
+    add_random_edge!(adj, nb_edge_int, max_dist, max_stable_it)
 end
