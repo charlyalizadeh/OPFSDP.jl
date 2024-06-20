@@ -19,6 +19,8 @@ include("utils/graphs.jl")
 include("decompose/cliques.jl")
 include("decompose/cliquetree.jl")
 include("decompose/extension/extension.jl")
+include("decompose/extension/cholesky.jl")
+include("decompose/extension/randomedge.jl")
 include("decompose/merge/merge.jl")
 include("decompose/combine.jl")
 

@@ -18,3 +18,11 @@ end
 function cholesky_extension(network::PowerFlowNetwork)
     return cholesky_extension(adjacency_matrix(network))
 end
+
+function chordal_extension(network::PowerFlowNetwork, alg::CholeskyExtension)
+    return cholesky_extension(network)
+end
+
+function chordal_extension(adj::SparseMatrixCSC, alg::CholeskyExtension)
+    return cholesky_extension(adj)
+end
