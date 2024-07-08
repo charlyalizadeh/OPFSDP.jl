@@ -1,6 +1,7 @@
 @enum CostType begin
     piecewise_linear = 1
     quadratic = 2
+    rawgo = 3
 end
 
 @enum BusType begin
@@ -35,7 +36,7 @@ mutable struct Generator
 	Pmax::Float64
 	Qmin::Float64
 	Qmax::Float64
-    active_cost_coeff::Vector{Float64}
+    active_cost_coeff::Vector
     reactive_cost_coeff::Vector{Float64}
     active_cost_type::Union{CostType,Nothing}
     reactive_cost_type::Union{CostType,Nothing}
@@ -44,7 +45,7 @@ mutable struct Generator
                        power::Complex=complex(0., 0.),
                        Pmin::Float64=0., Pmax::Float64=0.,
                        Qmin::Float64=0., Qmax::Float64=0.,
-					   active_cost_coeff::Vector{Float64}=Float64[], reactive_cost_coeff::Vector{Float64}=Float64[],
+					   active_cost_coeff::Vector=Float64[], reactive_cost_coeff::Vector{Float64}=Float64[],
                        active_cost_type::Union{CostType,Nothing}=nothing, reactive_cost_type::Union{CostType,Nothing}=nothing)
 		new(id, genid, genorder, status, power, Pmin, Pmax, Qmin, Qmax, active_cost_coeff, reactive_cost_coeff, active_cost_type, reactive_cost_type)
 	end
