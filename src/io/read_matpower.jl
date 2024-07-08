@@ -134,10 +134,10 @@ function _extract_branches_values(bus_dict, values, baseMVA; convert_r_x=false, 
     return v_from, v_to, admittance, susceptance, tf_ratio, tf_ps_angle
 end
 
-function _extract_branches(network, lines, baseMVA; convert_r_x=false, factor=nothing)
+function _extract_branches(lines, baseMVA; convert_r_x=false, factor=nothing)
     i = _arg_branch(lines) + 1
-
     branches::Vector{Branch} = []
+
     while !occursin("];", lines[i])
         values = _get_line_values(lines[i])
         ang = values[10]
@@ -197,7 +197,7 @@ function read_matpower(path::AbstractString)
         factor = vbase^2 / sbase
     end
     network.generators, network.generators_order = _extract_gen_data(lines, baseMVA)
-    network.branches = _extract_branches(network, lines, baseMVA; convert_r_x=convert_r_x, factor=factor)
+    network.branches = _extract_branches(lines, baseMVA; convert_r_x=convert_r_x, factor=factor)
     network.ngen = sum(length(val) for val in values(network.generators))
     if occursin("mpc.gencost", file)
         _add_gencost_data!(network, lines)
