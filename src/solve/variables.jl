@@ -49,6 +49,15 @@ function _define_generator_power_variables!(model, network)
 		!isinf(gen.Pmin) && set_lower_bound(variables["real(S_$(gen.genid))"], gen.Pmin)
 		!isinf(gen.Qmax) && set_upper_bound(variables["imag(S_$(gen.genid))"], gen.Qmax)
 		!isinf(gen.Qmin) && set_lower_bound(variables["imag(S_$(gen.genid))"], gen.Qmin)
+        if gen.active_cost_type == rawgo
+            for (i, c) in enumerate(gen.active_cost_coeff)
+                variables["real(S_$(gen.genid)_$i)"] = @variable(model, base_name = "real(S_$(gen.genid)_$i)")
+                set_upper_bound(variables["real(S_$(gen.genid)_$i)"], c["pmax"])
+                set_lower_bound(variables["real(S_$(gen.genid)_$i)"], 0)
+            end
+            @constraint(model, variables["real(S_$(gen.genid))"] == sum(variables["real(S_$(gen.genid)_$i)"] for i in 1:length(gen.active_cost_coeff)))
+            @constraint(model, variables["real(S_$(gen.genid))"] >= 0)
+        end
     end
     return variables
 end

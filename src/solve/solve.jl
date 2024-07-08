@@ -100,7 +100,7 @@ function build_model(network::PowerFlowNetwork, cliques, cliquetree)
 
 
     # Objective
-    _define_objective_polynomial!(model, network, variables)
+    _define_objective!(model, network, variables)
 
     # Constraints
     #_define_branch_current_flow_constraints!(model, network, variables, X, Y)
