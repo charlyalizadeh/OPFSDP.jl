@@ -15,6 +15,7 @@ include("core.jl")
 include("io/read_matpower.jl")
 include("io/read_rawgo.jl")
 include("io/read_network.jl")
+include("io/write_decomposition.jl")
 include("utils/graphs.jl")
 include("decompose/cliques.jl")
 include("decompose/cliquetree.jl")
@@ -36,6 +37,7 @@ include("solve/solve.jl")
 
 
 export read_matpower, read_rawgo, read_network
+export write_decomposition
 export display_opf
 export chordal_extension
 export merge_cliques!, merge_molzahn!

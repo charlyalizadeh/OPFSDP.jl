@@ -72,6 +72,7 @@ Apply the Molzahn et al. merging alogrithm to the chordal graph represented by `
 `L` is a percentage of the number of cliques in `maximal_cliques`. It is used to stop the merging.
 """
 function merge_molzahn!(cadj, maximal_cliques, clique_tree, L::Float64=0.1)
+    total_cost = 0
     treshold = L * length(maximal_cliques)
     if treshold < 2
         treshold = 2
@@ -79,11 +80,13 @@ function merge_molzahn!(cadj, maximal_cliques, clique_tree, L::Float64=0.1)
     while length(maximal_cliques) > treshold
         costs = compute_merge_cost_all(maximal_cliques, clique_tree)
         i, k, cost = argmin(x -> x[3], costs)
+        total_cost += -cost
         clique = union(maximal_cliques[i], maximal_cliques[k])
         clique_tree = merge_clique!(i, k, clique, maximal_cliques, clique_tree)
     end
     for c in maximal_cliques
         make_subgraph_complete!(cadj, c)
     end
+    println("TOTAL REWARD: $(total_cost)")
 end
 merge_cliques!(cadj, maximal_cliques, clique_tree, merge_alg::MolzahnMerge) = merge_molzahn!(cadj, maximal_cliques, clique_tree, merge_alg.L)
